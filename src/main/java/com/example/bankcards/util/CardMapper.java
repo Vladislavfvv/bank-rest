@@ -2,7 +2,11 @@ package com.example.bankcards.util;
 
 import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.entity.Card;
-import org.mapstruct.*;
+import org.mapstruct.Mapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 

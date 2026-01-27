@@ -53,7 +53,7 @@ public class CardService {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
-    public CardDto getCardInfoById(Long id) {
+    public CardDto getCardById(Long id) {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new CardNotFoundException(PREFIX_CARD_WITH_ID + id + NOT_FOUND_SUFFIX));
 
@@ -62,7 +62,7 @@ public class CardService {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
-    public Page<CardDto> getAllCardInfos(int page, int size) {
+    public Page<CardDto> getAllCards(int page, int size) {
         Authentication authentication = requireAuthentication();
         boolean isAdmin = isAdmin(authentication);
 
@@ -88,7 +88,7 @@ public class CardService {
 
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @Transactional
-    public CardDto updateCardInfo(Long id, CardDto dto) {
+    public CardDto updateCard(Long id, CardDto dto) {
         Card existing = cardRepository.findById(id)
                 .orElseThrow(() -> new CardNotFoundException(PREFIX_CARD_WITH_ID + id + NOT_FOUND_SUFFIX));
 
@@ -118,7 +118,7 @@ public class CardService {
 
     @PreAuthorize("hasAnyRole('ADMIN','USER')")
     @Transactional
-    public void deleteCardInfo(Long id) {
+    public void deleteCard(Long id) {
         Card card = cardRepository.findById(id)
                 .orElseThrow(() -> new CardNotFoundException(PREFIX_CARD_WITH_ID + id + NOT_FOUND_SUFFIX));
 
