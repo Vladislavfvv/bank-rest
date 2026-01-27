@@ -66,4 +66,9 @@ public class User {
     public boolean isAccountActive() {
         return isActive != null && isActive;
     }
+
+    // Получить все карты пользователя (для совместимости с CardMapper)
+    public List<Card> getAllCards() {
+        return cards != null ? cards : new ArrayList<>();
+    }
 }

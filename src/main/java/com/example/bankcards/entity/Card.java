@@ -72,4 +72,28 @@ public class Card {
             expirationDate.getMonthValue(), 
             expirationDate.getYear() % 100);
     }
+
+    // Проверка активности карты
+    public boolean isActive() {
+        return status == Status.ACTIVE && expirationDate.isAfter(LocalDate.now());
+    }
+
+    // Операции с балансом
+    public boolean canDebit(BigDecimal amount) {
+        return balance.compareTo(amount) >= 0 && isActive();
+    }
+
+    public void credit(BigDecimal amount) {
+        if (amount.compareTo(BigDecimal.ZERO) > 0) {
+            this.balance = this.balance.add(amount);
+        }
+    }
+
+    public boolean debit(BigDecimal amount) {
+        if (canDebit(amount)) {
+            this.balance = this.balance.subtract(amount);
+            return true;
+        }
+        return false;
+    }
 }
