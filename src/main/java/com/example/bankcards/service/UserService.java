@@ -1,6 +1,9 @@
 package com.example.bankcards.service;
 
 import com.example.bankcards.dto.*;
+import com.example.bankcards.dto.user.CreateUserFromTokenRequest;
+import com.example.bankcards.dto.user.PagedUserResponse;
+import com.example.bankcards.dto.user.UpdateUserDto;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.CardAlreadyExistsException;
@@ -17,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,10 +105,10 @@ public class UserService {
 
 
     /**
-     * Для админа
-     * @param dto
-     * @return
+     * Создать пользователя (только для админа)
      */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public UserDto createUser(UserDto dto) {
         log.info("Creating user in database: email={}, firstName={}, lastName={}",
                 dto.getEmail(), dto.getFirstName(), dto.getLastName());
@@ -586,6 +590,10 @@ public class UserService {
         return userMapper.toDto(refreshedUser);
     }
 
+    /**
+     * Удалить пользователя (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public void deleteUser(Long id) {
         // Получаем пользователя для извлечения email перед удалением
@@ -596,5 +604,114 @@ public class UserService {
 
         // Удаляем из user-service базы данных
         userRepository.deleteById(id);
+
+        log.info("User successfully deleted from database: id={}, email={}", id, email);
     }
+
+    // ========== ADMIN METHODS ==========
+
+    /**
+     * Получить всех пользователей с пагинацией (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public PagedUserResponse getAllUsersForAdmin(int page, int size) {
+        log.info("Admin requesting all users, page: {}, size: {}", page, size);
+        
+        Page<User> users = userRepository.findAll(PageRequest.of(page, size, Sort.by("id").ascending()));
+        
+        List<UserDto> dtos = users.stream()
+                .map(userMapper::toDto)
+                .toList();
+
+        PagedUserResponse response = new PagedUserResponse(
+                dtos,
+                users.getNumber(),
+                users.getSize(),
+                users.getTotalElements(),
+                users.getTotalPages()
+        );
+        
+        log.info("Admin retrieved {} users", response.getTotalElements());
+        return response;
+    }
+
+    /**
+     * Обновить пользователя по ID (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public UserDto updateUserByAdminId(Long id, UpdateUserDto dto) {
+        log.info("Admin updating user: id={}", id);
+
+        User existUser = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(PREFIX_WITH_ID + id + NOT_FOUND_SUFFIX));
+
+        UserDto updated = updateUserInternal(existUser, dto);
+
+        log.info("Admin successfully updated user: id={}, email={}", updated.getId(), updated.getEmail());
+        return updated;
+    }
+
+    /**
+     * Заблокировать пользователя (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public UserDto blockUser(Long id) {
+        log.info("Admin blocking user: id={}", id);
+        
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(PREFIX_WITH_ID + id + NOT_FOUND_SUFFIX));
+
+        // Блокируем все карты пользователя
+        user.getCards().forEach(Card::block);
+        
+        User saved = userRepository.save(user);
+        
+        log.info("Admin blocked user and all cards: id={}, email={}, cards blocked: {}", 
+                saved.getId(), saved.getEmail(), saved.getCards().size());
+        
+        return userMapper.toDto(saved);
+    }
+
+    /**
+     * Активировать пользователя (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public UserDto activateUser(Long id) {
+        log.info("Admin activating user: id={}", id);
+        
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(PREFIX_WITH_ID + id + NOT_FOUND_SUFFIX));
+
+        // Активируем все карты пользователя
+        user.getCards().forEach(Card::activate);
+        
+        User saved = userRepository.save(user);
+        
+        log.info("Admin activated user and all cards: id={}, email={}, cards activated: {}", 
+                saved.getId(), saved.getEmail(), saved.getCards().size());
+        
+        return userMapper.toDto(saved);
+    }
+
+    /**
+     * Поиск пользователей по email (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public List<UserDto> searchUsersByEmail(String emailPattern) {
+        log.info("Admin searching users by email pattern: {}", emailPattern);
+        
+        List<User> users = userRepository.findByEmailContainingIgnoreCase(emailPattern);
+        List<UserDto> result = users.stream()
+                .map(userMapper::toDto)
+                .toList();
+        
+        log.info("Admin found {} users matching email pattern: {}", result.size(), emailPattern);
+        return result;
+    }
+
 }

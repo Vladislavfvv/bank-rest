@@ -1,5 +1,6 @@
-package com.example.bankcards.dto;
+package com.example.bankcards.dto.user;
 
+import com.example.bankcards.dto.CardDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

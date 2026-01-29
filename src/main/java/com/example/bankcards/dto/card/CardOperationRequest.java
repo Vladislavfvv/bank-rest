@@ -1,4 +1,4 @@
-package com.example.bankcards.dto;
+package com.example.bankcards.dto.card;
 
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;

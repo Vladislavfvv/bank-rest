@@ -30,4 +30,8 @@ public interface UserRepository extends JpaRepository<User,Long> {
     // Используем стандартный метод findAll() - Spring Data JPA автоматически добавит ORDER BY из Pageable
     Page<User> findAll(Pageable pageable);
 
+    // Поиск пользователей по части email (для админа)
+    @Query("SELECT u FROM User u WHERE LOWER(u.email) LIKE LOWER(CONCAT('%', :emailPattern, '%'))")
+    List<User> findByEmailContainingIgnoreCase(@Param("emailPattern") String emailPattern);
+
 }

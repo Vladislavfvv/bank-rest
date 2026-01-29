@@ -2,18 +2,7 @@ package com.example.bankcards.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Id;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Index;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Column;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -22,11 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "cards", indexes = {
-        @Index(name = "idx_card_user", columnList = "user_id"),
-        @Index(name = "idx_card_number", columnList = "number")
-},
-        schema = "public")
+@Table(name = "cards", schema = "public")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -106,5 +91,14 @@ public class Card {
             return true;
         }
         return false;
+    }
+
+    // Административные операции
+    public void block() {
+        this.status = Status.BLOCKED;
+    }
+
+    public void activate() {
+        this.status = Status.ACTIVE;
     }
 }

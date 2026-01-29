@@ -1,4 +1,4 @@
-package com.example.bankcards.dto;
+package com.example.bankcards.dto.authentication;
 
 import com.example.bankcards.entity.Role;
 import lombok.AllArgsConstructor;

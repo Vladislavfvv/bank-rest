@@ -1,6 +1,7 @@
 package com.example.bankcards.service;
 
 import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.card.CreateCardRequest;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.CardNotFoundException;
@@ -9,7 +10,6 @@ import com.example.bankcards.repository.CardRepository;
 import com.example.bankcards.repository.UserRepository;
 import com.example.bankcards.util.CardMapper;
 import com.example.bankcards.util.SecurityUtils;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -23,6 +23,10 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -36,7 +40,7 @@ public class CardService {
     private static final String PREFIX_CARD_WITH_ID = "Card with id ";
 
 
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public CardDto save(CardDto dto) {
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(
@@ -116,7 +120,7 @@ public class CardService {
         return cardMapper.toDto(cardRepository.save(existing));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','USER')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Transactional
     public void deleteCard(Long id) {
         Card card = cardRepository.findById(id)
@@ -193,6 +197,119 @@ public class CardService {
 
             throw new AccessDeniedException("Cannot determine current user: " + e.getMessage());
         }
+    }
+
+    // ========== ADMIN METHODS ==========
+
+    /**
+     * Создать карту для пользователя (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public CardDto createCardForUser(Long userId, CreateCardRequest request) {
+        log.info("Admin creating card for user: {}", userId);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found with id: " + userId));
+
+        // Генерируем номер карты (в реальном приложении это будет более сложная логика)
+        String cardNumber = generateCardNumber();
+        
+        // Проверяем, не существует ли уже карта с таким номером
+        if (cardRepository.findByNumber(cardNumber).isPresent()) {
+            // Если номер занят, генерируем новый (в реальном приложении - цикл)
+            cardNumber = generateCardNumber();
+        }
+
+        // Создаем CardDto для использования существующей логики
+        CardDto cardDto = new CardDto();
+        cardDto.setUserId(userId);
+        cardDto.setNumber(cardNumber);
+        cardDto.setHolder(request.getHolder() != null ? request.getHolder() : 
+                         (user.getFirstName() + " " + user.getLastName()));
+        cardDto.setExpirationDate(generateExpirationDate()); // Генерируем дату истечения
+        cardDto.setBalance(BigDecimal.ZERO); // Начальный баланс
+
+        Card entity = cardMapper.toEntity(cardDto);
+        entity.setUser(user);
+        entity.setCvv(generateCvv()); // Генерируем CVV
+
+        Card saved = cardRepository.save(entity);
+        log.info("Admin created card: {} for user: {}", saved.getMaskedNumber(), userId);
+        
+        return cardMapper.toDto(saved);
+    }
+
+    // Вспомогательные методы для генерации данных карты
+    private String generateCardNumber() {
+        // Простая генерация номера карты (в реальном приложении - более сложная логика)
+        return "4000" + String.format("%012d", (long)(Math.random() * 1000000000000L));
+    }
+
+    private LocalDate generateExpirationDate() {
+        // Карта действительна 3 года
+        return LocalDate.now().plusYears(3);
+    }
+
+    private String generateCvv() {
+        // Генерируем 3-значный CVV
+        return String.format("%03d", (int)(Math.random() * 1000));
+    }
+
+    /**
+     * Заблокировать карту (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public CardDto blockCard(Long cardId) {
+        log.info("Admin blocking card: {}", cardId);
+        
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CardNotFoundException(PREFIX_CARD_WITH_ID + cardId + NOT_FOUND_SUFFIX));
+
+        card.block();
+        Card saved = cardRepository.save(card);
+        
+        log.info("Admin blocked card: {}", saved.getMaskedNumber());
+        return cardMapper.toDto(saved);
+    }
+
+    /**
+     * Активировать карту (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public CardDto activateCard(Long cardId) {
+        log.info("Admin activating card: {}", cardId);
+        
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CardNotFoundException(PREFIX_CARD_WITH_ID + cardId + NOT_FOUND_SUFFIX));
+
+        card.activate();
+        Card saved = cardRepository.save(card);
+        
+        log.info("Admin activated card: {}", saved.getMaskedNumber());
+        return cardMapper.toDto(saved);
+    }
+
+    /**
+     * Получить карты пользователя (только для админа)
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public Page<CardDto> getUserCardsForAdmin(Long userId, int page, int size) {
+        log.info("Admin requesting cards for user: {}", userId);
+        
+        // Проверяем существование пользователя
+        if (!userRepository.existsById(userId)) {
+            throw new UserNotFoundException("User not found with id: " + userId);
+        }
+
+        Page<Card> cards = cardRepository.findAllByUserId(userId, PageRequest.of(page, size));
+        Page<CardDto> result = cards.map(cardMapper::toDto);
+        
+        log.info("Admin retrieved {} cards for user: {}", result.getTotalElements(), userId);
+        return result;
     }
 
 }

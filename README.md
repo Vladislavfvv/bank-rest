@@ -94,6 +94,73 @@
     <li>ООП и уровни абстракции</li>
   </ul>
 
+<h2>🚀 Инструкция по запуску</h2>
+
+<h3>📋 Предварительные требования</h3>
+<ul>
+  <li>Java 17+</li>
+  <li>Maven 3.6+</li>
+  <li>PostgreSQL 12+ (или Docker)</li>
+</ul>
+
+<h3>🐳 Запуск с Docker Compose (рекомендуется)</h3>
+<pre><code># 1. Клонировать репозиторий
+git clone &lt;repository-url&gt;
+cd bank_rest
+
+# 2. Запустить PostgreSQL через Docker
+docker-compose up -d
+
+# 3. Собрать и запустить приложение
+mvn clean install
+mvn spring-boot:run
+
+# Приложение будет доступно по адресу: http://localhost:8080
+</code></pre>
+
+<h3>🔧 Ручная настройка</h3>
+<pre><code># 1. Создать базу данных PostgreSQL
+createdb bankcards
+
+# 2. Настроить переменные окружения (опционально)
+export DB_USERNAME=postgres
+export DB_PASSWORD=postgres
+export JWT_SECRET=mySecretKey123456789012345678901234567890
+
+# 3. Запустить приложение
+mvn spring-boot:run
+</code></pre>
+
+<h3>📚 API Документация</h3>
+<ul>
+  <li><strong>Swagger UI:</strong> <a href="http://localhost:8080/swagger-ui.html">http://localhost:8080/swagger-ui.html</a></li>
+  <li><strong>OpenAPI JSON:</strong> <a href="http://localhost:8080/api-docs">http://localhost:8080/api-docs</a></li>
+</ul>
+
+<h3>🔑 Тестовые учетные данные</h3>
+<p>После запуска автоматически создается администратор:</p>
+<ul>
+  <li><strong>Email:</strong> admin@bankcards.com</li>
+  <li><strong>Password:</strong> Admin123!</li>
+  <li><strong>Role:</strong> ADMIN</li>
+</ul>
+
+<h3>🧪 Примеры API запросов</h3>
+<pre><code># 1. Получить токен (логин)
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@bankcards.com","password":"Admin123!"}'
+
+# 2. Получить список карт (с токеном)
+curl -X GET http://localhost:8080/api/v1/cards \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+# 3. Создать пользователя
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","password":"User123!","firstName":"John","lastName":"Doe"}'
+</code></pre>
+
 <h2>💡 Технологии</h2>
   <p>
     Java 17+, Spring Boot, Spring Security, Spring Data JPA, PostgreSQL/MySQL, Liquibase, Docker, JWT, Swagger (OpenAPI)

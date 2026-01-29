@@ -38,6 +38,13 @@ public interface CardRepository extends JpaRepository<Card,Long> {
     Page<Card> findAllByUser_EmailIgnoreCase(@Param("email") String email, Pageable pageable);
 
     /**
+     * Находит все карты пользователя по ID пользователя с пагинацией.
+     * Используется админом для получения карт конкретного пользователя.
+     */
+    @Query("SELECT c FROM Card c WHERE c.user.id = :userId")
+    Page<Card> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
+
+    /**
      * Удаляет все карты пользователя по ID пользователя.
      * Используется для гарантированного удаления всех карт пользователя.
      */
