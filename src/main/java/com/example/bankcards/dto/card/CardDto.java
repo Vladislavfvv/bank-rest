@@ -1,14 +1,25 @@
-package com.example.bankcards.dto;
+package com.example.bankcards.dto.card;
 
 import com.example.bankcards.entity.Status;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * DTO for card information transfer between layers.
+ * Used for API responses and internal data exchange.
+ * Contains card details with validation constraints and security considerations.
+ * CVV is excluded from JSON serialization for security reasons.
+ */
 @Data
 public class CardDto {
     private Long id;
@@ -35,13 +46,13 @@ public class CardDto {
     @NotNull(message = "Status is required")
     private Status status;
 
-    // Маскированный номер карты (только для отображения)
+    // Masked card number (for display only)
     private String maskedNumber;
 
-    // Маскированная дата истечения MM/YY (только для отображения)
+    // Masked expiration date MM/YY (for display only)
     private String maskedExpirationDate;
 
-    // CVV НЕ включаем в DTO по соображениям безопасности
+    // CVV is NOT included in DTO for security reasons
     @JsonIgnore
-    private String cvv; // Только для внутреннего использования, если необходимо
+    private String cvv; // For internal use only, if necessary
 }

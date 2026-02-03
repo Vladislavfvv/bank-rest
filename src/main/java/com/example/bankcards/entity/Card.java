@@ -2,7 +2,19 @@ package com.example.bankcards.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -14,7 +26,10 @@ import java.time.LocalDate;
 @Table(name = "cards", schema = "public")
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor
+@Builder
+@SuppressWarnings({"JpaDataSourceORMInspection"}) // Suppress database connection warnings in IDE
 public class Card {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +40,7 @@ public class Card {
     @JsonBackReference
     private User user;
 
-    @Column(nullable = false, length = 256) // Для зашифрованного номера
+    @Column(nullable = false, length = 256) // For encrypted number
     private String number;
 
     @Column(nullable = false)
@@ -34,18 +49,20 @@ public class Card {
     @Column(name = "expiration_date", nullable = false)
     private LocalDate expirationDate;
 
-    @Column(nullable = false, length = 4) // CVV зашифрован, но короткий
-    @JsonIgnore // НИКОГДА не отправляем CVV в JSON ответах!
+    @Column(nullable = false, length = 256) // CVV encrypted, needs more space
+    @JsonIgnore // NEVER send CVV in JSON responses!
     private String cvv;
 
     @Column(precision = 15, scale = 2, nullable = false)
+    @Builder.Default
     private BigDecimal balance = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Status status = Status.ACTIVE;
 
-    // Метод для отображения маскированного номера карты
+    // Method to display masked card number
     public String getMaskedNumber() {
         if (number == null || number.length() < 4) {
             return "****";
@@ -53,28 +70,24 @@ public class Card {
         return "**** **** **** " + number.substring(number.length() - 4);
     }
 
-    // Метод для проверки CVV (для внутреннего использования)
-    public boolean verifyCvv(String inputCvv) {
-        // В реальном приложении здесь будет расшифровка и сравнение
-        return this.cvv != null && this.cvv.equals(inputCvv);
-    }
 
-    // Маскированная дата истечения (MM/YY)
+
+    // Masked expiration date (MM/YY)
     public String getMaskedExpirationDate() {
         if (expirationDate == null) {
             return "**/**";
         }
-        return String.format("%02d/%02d", 
-            expirationDate.getMonthValue(), 
+        return String.format("%02d/%02d",
+            expirationDate.getMonthValue(),
             expirationDate.getYear() % 100);
     }
 
-    // Проверка активности карты
+    // Check card activity
     public boolean isActive() {
         return status == Status.ACTIVE && expirationDate.isAfter(LocalDate.now());
     }
 
-    // Операции с балансом
+    // Balance operations
     public boolean canDebit(BigDecimal amount) {
         return balance.compareTo(amount) >= 0 && isActive();
     }
@@ -93,7 +106,7 @@ public class Card {
         return false;
     }
 
-    // Административные операции
+    // Administrative operations
     public void block() {
         this.status = Status.BLOCKED;
     }

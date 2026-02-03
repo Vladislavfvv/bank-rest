@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,19 +35,19 @@ public class AuthenticationService {
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest loginRequest) {
         try {
-            // Используем AuthenticationManager для аутентификации
-            Authentication authentication = authenticationManager.authenticate(
+            // Use AuthenticationManager for authentication (validates credentials)
+            authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             loginRequest.getEmail(),
                             loginRequest.getPassword()
                     )
             );
 
-            // Получаем пользователя из БД для генерации токенов
+            // Get user from database for token generation
             User user = userRepository.findByEmailJPQL(loginRequest.getEmail())
                     .orElseThrow(() -> new BadCredentialsException("User not found"));
 
-            // Генерация JWT токенов
+            // Generate JWT tokens
             String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail(), user.getRole());
             String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail(), user.getRole());
 
@@ -62,21 +61,21 @@ public class AuthenticationService {
     }
 
     /**
-     * Регистрирует нового пользователя
+     * Registers a new user
      */
     @Transactional
     public TokenResponse register(RegisterRequest registerRequest) {
-        // Проверяем, не существует ли уже пользователь с таким email
+        // Check if user with this email already exists
         if (userRepository.findByEmailJPQL(registerRequest.getEmail()).isPresent()) {
             log.warn("Registration attempt for existing email: {}", registerRequest.getEmail());
             throw new UserAlreadyExistsException("User with email " + registerRequest.getEmail() + " already exists");
         }
 
-        // Создаем нового пользователя с ролью USER по умолчанию
+        // Create new user with default USER role
         User user = new User();
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-        user.setRole(Role.ROLE_USER); // По умолчанию все новые пользователи - USER
+        user.setRole(Role.ROLE_USER); // By default
         user.setFirstName(registerRequest.getFirstName());
         user.setLastName(registerRequest.getLastName());
         user.setBirthDate(registerRequest.getBirthDate());
@@ -87,7 +86,7 @@ public class AuthenticationService {
         User savedUser = userRepository.save(user);
         log.info("User registered successfully: {}", savedUser.getEmail());
 
-        // Генерация JWT токенов
+        // Generate JWT tokens
         String accessToken = jwtTokenProvider.generateAccessToken(user.getEmail(), user.getRole());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail(), user.getRole());
         
@@ -95,7 +94,7 @@ public class AuthenticationService {
     }
 
     /**
-     * Обновляет access токен с помощью refresh токена
+     * Updates access token using refresh token
      */
     public TokenResponse refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
@@ -105,7 +104,7 @@ public class AuthenticationService {
         String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
         String roleStr = jwtTokenProvider.getRoleFromToken(refreshToken);
 
-        // Валидация роли из токена
+        // Validate role from token
         Role roleFromToken;
         try {
             roleFromToken = Role.valueOf(roleStr);
@@ -116,17 +115,17 @@ public class AuthenticationService {
         User user = userRepository.findByEmailJPQL(username)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
 
-        // Проверяем, что роль в токене совпадает с ролью в БД (дополнительная проверка безопасности)
+        // Check that role in token matches role in database (additional security check)
         if (user.getRole() != roleFromToken) {
             throw new BadCredentialsException("Role mismatch: token role does not match user role");
         }
 
-        // Проверяем, что аккаунт активен
-        if (!user.isAccountActive()) {
+        // Check that account is active
+        if (user.isAccountInactive()) {
             throw new BadCredentialsException("Account is disabled");
         }
 
-        // Используем роль из БД для генерации новых токенов
+        // Use role from database for generating new tokens
         String newAccessToken = jwtTokenProvider.generateAccessToken(user.getEmail(), user.getRole());
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail(), user.getRole());
 
@@ -135,7 +134,7 @@ public class AuthenticationService {
     }
 
     /**
-     * Валидирует токен
+     * Validates token
      */
     public TokenValidationResponse validateToken(String token) {
         try {
@@ -152,7 +151,7 @@ public class AuthenticationService {
     }
 
     /**
-     * Удаляет пользователя по email
+     * Deletes user by email
      */
     @Transactional
     public void deleteUserByEmail(String email) {
@@ -164,11 +163,11 @@ public class AuthenticationService {
     }
 
     /**
-     * Создает администратора (только для внутреннего использования)
+     * Creates administrator (for internal use only)
      */
     @Transactional
     public User createAdmin(String email, String password, String firstName, String lastName) {
-        // Проверяем, не существует ли уже пользователь с таким email
+        // Check if user with this email already exists
         if (userRepository.findByEmailJPQL(email).isPresent()) {
             throw new UserAlreadyExistsException("User with email " + email + " already exists");
         }

@@ -8,27 +8,38 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
+/**
+ * CORS (Cross-Origin Resource Sharing) configuration.
+ * Configures allowed origins, methods, headers, and credentials for cross-origin requests.
+ * Enables frontend applications from different domains to access the API.
+ */
 @Configuration
 public class CorsConfig {
 
     @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:4200}")
     private String[] allowedOrigins;
 
+    /**
+     * CORS configuration source bean.
+     * Defines comprehensive CORS settings including allowed origins, methods, headers.
+     * Supports credentials and configures preflight request caching.
+     * 
+     * @return configured CorsConfigurationSource
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Разрешенные домены
+        // Allowed domains
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
         
-        // Разрешенные HTTP методы
+        // Allowed HTTP methods
         configuration.setAllowedMethods(Arrays.asList(
             "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
         
-        // Разрешенные заголовки
+        // Allowed headers
         configuration.setAllowedHeaders(Arrays.asList(
             "Authorization", 
             "Content-Type", 
@@ -39,17 +50,17 @@ public class CorsConfig {
             "Access-Control-Request-Headers"
         ));
         
-        // Заголовки, которые клиент может читать
+        // Headers that client can read
         configuration.setExposedHeaders(Arrays.asList(
             "Access-Control-Allow-Origin",
             "Access-Control-Allow-Credentials",
             "Authorization"
         ));
         
-        // Разрешить отправку cookies и авторизационных заголовков
+        // Allow sending cookies and authorization headers
         configuration.setAllowCredentials(true);
         
-        // Время кеширования preflight запросов (в секундах)
+        // Preflight request cache time (in seconds)
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

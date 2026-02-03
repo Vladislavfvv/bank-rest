@@ -1,6 +1,6 @@
 package com.example.bankcards.entity;
 
 public enum TransferStatus {
-    COMPLETED,  // Перевод выполнен успешно
-    FAILED      // Перевод не удался
+    COMPLETED,  // Transfer completed successfully
+    FAILED      // Transfer failed
 }

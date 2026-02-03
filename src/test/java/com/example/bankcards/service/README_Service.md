@@ -1,3 +1,3 @@
-# Тесты сервисов
+# Service Tests
 
-Юнит-тесты бизнес-логики с использованием моков.
+Unit tests of business logic using mocks.

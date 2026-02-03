@@ -1,44 +1,30 @@
-# Конфигурация для продакшена
-spring:
-  datasource:
-    url: ${DATABASE_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    hikari:
-      maximum-pool-size: 30
-      minimum-idle: 10
-      connection-timeout: 20000
-      idle-timeout: 300000
-      max-lifetime: 1200000
-  jpa:
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: false
-        generate_statistics: false
+# application-prod.yml — production environment settings
 
-# Безопасные настройки логирования для продакшена
+# Production logging
 logging:
   level:
     root: WARN
     com.example.bankcards: INFO
     org.springframework.security: WARN
-    org.hibernate: WARN
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%logger{36}] - %msg%n"
   file:
-    name: /var/log/bankcards/application.log
+    name: /app/logs/bankcards.log
   logback:
-    rollingpolicy:
-      max-file-size: 10MB
+    rolling policy:
+      max-file-size: 100MB
       max-history: 30
 
-# Отключаем Swagger в продакшене
-springdoc:
-  swagger-ui:
-    enabled: false
-  api-docs:
-    enabled: false
+# JPA settings for production
+spring:
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
 
-# Ограниченные Actuator endpoints для продакшена
+# Management endpoints for production
 management:
   endpoints:
     web:
@@ -46,4 +32,4 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: never
+      show-details: when-authorized

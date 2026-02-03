@@ -1,7 +1,7 @@
-# Конфигурация для локальной разработки
+# Configuration for local development
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/bankcards
+    url: jdbc:postgresql://localhost:5433/bankcards
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   jpa:
@@ -17,7 +17,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
-# Включаем все Actuator endpoints для разработки
+# Enable all Actuator endpoints for development
 management:
   endpoints:
     web:

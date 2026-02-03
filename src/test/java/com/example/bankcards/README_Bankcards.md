@@ -1,3 +1,3 @@
-# Тесты
+# Tests
 
-Общие классы и конфигурации для тестирования.
+Common classes and configurations for testing.

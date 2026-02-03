@@ -9,8 +9,8 @@ import org.mapstruct.Mapping;
 public interface TransferMapper {
 
     @Mapping(target = "fromCardId", source = "fromCard.id")
-    @Mapping(target = "fromCardMaskedNumber", expression = "java(transfer.getFromCard().getMaskedNumber())")
+    @Mapping(target = "fromCardMaskedNumber", ignore = true) // Set manually in TransferService due to encryption
     @Mapping(target = "toCardId", source = "toCard.id")
-    @Mapping(target = "toCardMaskedNumber", expression = "java(transfer.getToCard().getMaskedNumber())")
+    @Mapping(target = "toCardMaskedNumber", ignore = true) // Set manually in TransferService due to encryption
     TransferDto toDto(Transfer transfer);
 }

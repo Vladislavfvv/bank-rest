@@ -1,6 +1,6 @@
-# Безопасность
+# Security
 
-Конфигурации и компоненты безопасности: JWT, фильтры, UserDetailsService.
+Security configurations and components: JWT, filters, UserDetailsService.
 
 ## 🔐 Компоненты безопасности
 

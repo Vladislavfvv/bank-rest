@@ -6,7 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * DTO для ответа с результатом валидации токена.
+ * DTO for token validation response.
+ * Used to return validation results when checking JWT token validity.
+ * Contains validation status and extracted user information from token.
  */
 @Getter
 @Setter

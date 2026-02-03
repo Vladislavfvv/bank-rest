@@ -3,7 +3,7 @@ package com.example.bankcards.controller;
 import com.example.bankcards.dto.user.CreateUserFromTokenRequest;
 import com.example.bankcards.dto.user.PagedUserResponse;
 import com.example.bankcards.dto.user.UpdateUserDto;
-import com.example.bankcards.dto.UserDto;
+import com.example.bankcards.dto.user.UserDto;
 import com.example.bankcards.service.UserService;
 import com.example.bankcards.util.SecurityUtils;
 import jakarta.validation.Valid;
@@ -11,59 +11,70 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
+@SuppressWarnings({"all", "SimilarLogMessages"})
 public class UserController {
     private final UserService userService;
 
+    public static final String EXTRACTED_EMAIL_FROM_TOKEN = "Extracted email from token: {}";
     /**
-     * Получение своих данных из JWT токена.
-     * Email извлекается из токена (claim "sub"), пользователь получает свои данные.
+     * Get own data from JWT token.
+     * Email is extracted from token (claim "sub"), user gets their own data.
      *
-     * @param authentication объект аутентификации, содержащий JWT токен
-     * @return данные текущего пользователя
+     * @param authentication authentication object containing JWT token
+     * @return current user data
      */
     @GetMapping("/self")
     public ResponseEntity<UserDto> getSelfUser(Authentication authentication) {
         log.info("Getting user data from token");
 
-        // Извлекаем email из JWT токена
+        // Extract email from JWT token
         String email = SecurityUtils.getEmailFromToken(authentication);
-        log.debug("Extracted email from token: {}", email);
+        log.debug(EXTRACTED_EMAIL_FROM_TOKEN, email);
 
-        // Получаем пользователя по email
+        // Get user by email
         UserDto userDto = userService.getUserByEmail(email);
         return ResponseEntity.ok(userDto);
     }
 
     /**
-     * Создание пользователя из JWT токена.
-     * Email извлекается из токена (claim "sub"), остальные данные из тела запроса.
-     * Пользователь должен быть зарегистрирован в auth-service и иметь валидный JWT токен.
+     * Create user from JWT token.
+     * Email is extracted from token (claim "sub"), other data from request body.
+     * User must be registered in auth-service and have valid JWT token.
      *
-     * @param request        данные пользователя (firstName, lastName, birthDate)
-     * @param authentication объект аутентификации, содержащий JWT токен
-     * @return созданный пользователь
+     * @param request        user data (firstName, lastName, birthDate)
+     * @param authentication authentication object containing JWT token
+     * @return created user
      */
-    @PostMapping("/createUser")
-    public ResponseEntity<UserDto> createUserFromToken(
-            @Valid @RequestBody CreateUserFromTokenRequest request,
-            Authentication authentication) {
-        log.info("Creating user from token for authenticated user");
-
-        // Извлекаем email из JWT токена
-        String email = SecurityUtils.getEmailFromToken(authentication);
-        log.debug("Extracted email from token: {}", email);
-
-        // Создаем пользователя с email из токена
-        UserDto userDto = userService.createUserFromToken(email, request);
-        return ResponseEntity.ok(userDto);
-    }
+//    @PostMapping("/createUser")
+//    public ResponseEntity<UserDto> createUserFromToken(
+//            @Valid @RequestBody CreateUserFromTokenRequest request,
+//            Authentication authentication) {
+//        log.info("Creating user from token for authenticated user");
+//
+//        // Extract email from JWT token
+//        String email = SecurityUtils.getEmailFromToken(authentication);
+//        log.debug(EXTRACTED_EMAIL_FROM_TOKEN, email);
+//
+//        // Create user with email from token
+//        UserDto userDto = userService.createUserFromToken(email, request);
+//        return ResponseEntity.ok(userDto);
+//    }
 
     @PostMapping
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto dto) {
@@ -71,9 +82,9 @@ public class UserController {
     }
 
     /**
-     * Получение пользователя по ID.
-     * ADMIN: может получить любого пользователя.
-     * USER: может получить только свою информацию.
+     * Get user by ID.
+     * ADMIN: can get any user.
+     * USER: can get only their own information.
      */
     @GetMapping("/id")
     public ResponseEntity<UserDto> getUserById(
@@ -81,7 +92,7 @@ public class UserController {
             Authentication authentication) {
         UserDto user = userService.findUserById(id);
 
-        // Проверка доступа: USER может получить только свою информацию
+        // Access check: USER can get only their own information
         if (!SecurityUtils.hasAccess(authentication, user.getEmail())) {
             throw new AccessDeniedException("Access denied: You can only access your own information");
         }
@@ -90,9 +101,10 @@ public class UserController {
     }
 
     /**
-     * Получение списка всех пользователей.
-     * Доступно только для ADMIN (ограничение в SecurityConfig).
+     * Get list of all users.
+     * Available only for ADMIN.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<PagedUserResponse> getUsers(
             @RequestParam(defaultValue = "0") int page,
@@ -101,9 +113,9 @@ public class UserController {
     }
 
     /**
-     * Получение пользователя по email.
-     * ADMIN: может получить любого пользователя.
-     * USER: может получить только свою информацию.
+     * Get user by email.
+     * ADMIN: can get any user.
+     * USER: can get only their own information.
      */
     @GetMapping("/email")
     public ResponseEntity<UserDto> getUserByEmail(
@@ -112,8 +124,8 @@ public class UserController {
         log.info("Getting user by email: {} (requested by: {})",
                 email, authentication != null ? SecurityUtils.getEmailFromToken(authentication) : "unknown");
 
-        // Проверка доступа ДО получения пользователя из базы
-        // USER может запрашивать только свой email
+        // Access check BEFORE getting user from database
+        // USER can only request their own email
         if (!SecurityUtils.isAdmin(authentication)) {
             String userEmail = SecurityUtils.getEmailFromToken(authentication);
             log.debug("User is not ADMIN. Checking access: token email={}, requested email={}", userEmail, email);
@@ -125,7 +137,7 @@ public class UserController {
             log.debug("User is ADMIN, skipping access check");
         }
 
-        // Получаем пользователя из базы только после проверки доступа
+        // Get user from database only after access check
         log.debug("Fetching user from database for email: {}", email);
         UserDto user = userService.getUserByEmail(email);
         log.info("User found: id={}, email={}", user.getId(), user.getEmail());
@@ -134,52 +146,52 @@ public class UserController {
     }
 
     /**
-     * Обновление текущего пользователя (свой профиль).
-     * ID берется из JWT токена (по email).
-     * Выполняет частичное обновление - обновляются только переданные поля.
-     * Email берется из токена, holder для карт автоматически формируется из name + surname.
+     * Update current user (own profile).
+     * ID is taken from JWT token (by email).
+     * Performs partial update - only provided fields are updated.
+     * Email is taken from token, holder for cards is automatically formed from firstName + lastName.
      */
     @PutMapping("/me")
     public ResponseEntity<UserDto> updateCurrentUser(
             @RequestBody UpdateUserDto dto,
             Authentication authentication) {
-        log.info("Received update request for current user. DTO: firstName={}, lastName={}, name={}, surname={}, birthDate={}",
-                dto.getFirstName(), dto.getLastName(), dto.getName(), dto.getSurname(), dto.getBirthDate());
+        log.info("Received update request for current user. DTO: firstName={}, lastName={}, birthDate={}",
+                dto.getFirstName(), dto.getLastName(), dto.getBirthDate());
 
-        // Извлекаем email из токена
+        // Extract email from token
         String userEmail;
         try {
             userEmail = SecurityUtils.getEmailFromToken(authentication);
-            log.debug("Extracted email from token: {}", userEmail);
+            log.debug(EXTRACTED_EMAIL_FROM_TOKEN, userEmail);
         } catch (IllegalStateException e) {
             log.error("Failed to extract email from token: {}", e.getMessage());
             throw new AccessDeniedException("Access denied: Authentication required.");
         }
 
-        // Находим пользователя по email и обновляем его
+        // Find user by email and update them
         UserDto updated = userService.updateCurrentUser(userEmail, dto);
         log.info("User successfully updated: id={}, email={}", updated.getId(), updated.getEmail());
         return ResponseEntity.ok(updated);
     }
 
     /**
-     * Обновление пользователя по ID (только для ADMIN).
-     * ADMIN может обновить любого пользователя.
-     * Выполняет частичное обновление - обновляются только переданные поля.
-     * Holder для карт автоматически формируется из name + surname.
+     * Update user by ID (admin only).
+     * ADMIN can update any user.
+     * Performs partial update - only provided fields are updated.
+     * Holder for cards is automatically formed from name + surname.
      */
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
             @PathVariable Long id,
             @RequestBody UpdateUserDto dto,
             Authentication authentication) {
-        // Проверка доступа: только ADMIN может обновлять пользователей по ID
+        // Access check: only ADMIN can update users by ID
         if (!SecurityUtils.isAdmin(authentication)) {
             throw new AccessDeniedException("Access denied: Only administrators can update users by ID. " +
                     "Use PUT /api/v1/users/me to update your own profile.");
         }
 
-        // Извлекаем email админа для логирования
+        // Extract admin email for logging
         String adminEmail;
         try {
             adminEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -187,15 +199,16 @@ public class UserController {
             throw new AccessDeniedException("Access denied: Authentication required.");
         }
 
-        // Админ может обновить любого пользователя (проверка доступа не требуется)
+        // Admin can update any user (no access check required)
         return ResponseEntity.ok(userService.updateUserByAdmin(id, dto, adminEmail));
     }
 
     /**
-     * Удаление пользователя.
-     * Только ADMIN может удалять пользователей.
-     * USER не может удалять даже свои данные.
+     * Delete user.
+     * Only ADMIN can delete users.
+     * USER cannot delete even their own data.
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(
             @PathVariable Long id,
@@ -203,7 +216,7 @@ public class UserController {
         log.info("Delete user request received for user ID: {} by user: {}", id,
                 authentication != null ? SecurityUtils.getEmailFromToken(authentication) : "unknown");
 
-        // Проверка доступа: только ADMIN может удалять пользователей
+        // Access check: only ADMIN can delete users
         if (!SecurityUtils.isAdmin(authentication)) {
             log.warn("Access denied: User {} attempted to delete user ID: {}",
                     SecurityUtils.getEmailFromToken(authentication), id);
@@ -212,7 +225,7 @@ public class UserController {
 
         log.info("Admin user {} is deleting user ID: {}", SecurityUtils.getEmailFromToken(authentication), id);
 
-        // Проверяем, что пользователь существует и получаем email для синхронизации
+        // Check that user exists and get email for synchronization
         UserDto userToDelete = userService.findUserById(id);
         log.info("User to delete found: {} (email: {})", id, userToDelete.getEmail());
 
@@ -225,7 +238,7 @@ public class UserController {
     // ========== ADMIN METHODS ==========
 
     /**
-     * Получить всех пользователей (только для админа)
+     * Get all users (admin only)
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/all")
@@ -244,43 +257,7 @@ public class UserController {
     }
 
     /**
-     * Заблокировать пользователя (только для админа)
-     */
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/admin/{id}/block")
-    public ResponseEntity<UserDto> blockUser(
-            @PathVariable Long id,
-            Authentication authentication) {
-        
-        String adminEmail = SecurityUtils.getEmailFromToken(authentication);
-        log.info("Admin {} blocking user: {}", adminEmail, id);
-
-        UserDto user = userService.blockUser(id);
-        
-        log.info("Admin {} blocked user: {} ({})", adminEmail, id, user.getEmail());
-        return ResponseEntity.ok(user);
-    }
-
-    /**
-     * Активировать пользователя (только для админа)
-     */
-    @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/admin/{id}/activate")
-    public ResponseEntity<UserDto> activateUser(
-            @PathVariable Long id,
-            Authentication authentication) {
-        
-        String adminEmail = SecurityUtils.getEmailFromToken(authentication);
-        log.info("Admin {} activating user: {}", adminEmail, id);
-
-        UserDto user = userService.activateUser(id);
-        
-        log.info("Admin {} activated user: {} ({})", adminEmail, id, user.getEmail());
-        return ResponseEntity.ok(user);
-    }
-
-    /**
-     * Поиск пользователей по email (только для админа)
+     * Search users by email (admin only)
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/search")

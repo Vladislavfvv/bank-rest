@@ -1,6 +1,5 @@
 package com.example.bankcards.exception;
 
-import com.example.bankcards.dto.ErrorResponse;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.MalformedJwtException;
@@ -18,7 +17,6 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +28,7 @@ public class GlobalExceptionHandler {
     // ================= Authentication & Security Exceptions =================
     
     /**
-     * Обрабатывает исключения аутентификации из нашего сервиса.
+     * Handles authentication exceptions from our service.
      */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(
@@ -44,11 +42,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения неверных учетных данных.
+     * Handles invalid credentials exceptions.
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(
-            BadCredentialsException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") BadCredentialsException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.UNAUTHORIZED, 
             "BAD_CREDENTIALS", 
@@ -58,11 +56,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения отказа в доступе.
+     * Handles access denied exceptions.
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(
-            AccessDeniedException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") AccessDeniedException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.FORBIDDEN, 
             "ACCESS_DENIED", 
@@ -72,11 +70,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения недостаточной аутентификации.
+     * Handles insufficient authentication exceptions.
      */
     @ExceptionHandler(InsufficientAuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleInsufficientAuthenticationException(
-            InsufficientAuthenticationException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") InsufficientAuthenticationException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.UNAUTHORIZED, 
             "INSUFFICIENT_AUTHENTICATION", 
@@ -88,11 +86,11 @@ public class GlobalExceptionHandler {
     // ================= JWT Exceptions =================
     
     /**
-     * Обрабатывает исключения истекших JWT токенов.
+     * Handles expired JWT token exceptions.
      */
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<ErrorResponse> handleExpiredJwtException(
-            ExpiredJwtException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") ExpiredJwtException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.UNAUTHORIZED, 
             "TOKEN_EXPIRED", 
@@ -102,11 +100,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения некорректно сформированных JWT токенов.
+     * Handles malformed JWT token exceptions.
      */
     @ExceptionHandler(MalformedJwtException.class)
     public ResponseEntity<ErrorResponse> handleMalformedJwtException(
-            MalformedJwtException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") MalformedJwtException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.UNAUTHORIZED, 
             "INVALID_TOKEN", 
@@ -116,11 +114,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения неверной подписи JWT токена.
+     * Handles JWT token signature exceptions.
      */
     @ExceptionHandler(SignatureException.class)
     public ResponseEntity<ErrorResponse> handleSignatureException(
-            SignatureException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") SignatureException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.UNAUTHORIZED, 
             "INVALID_TOKEN_SIGNATURE", 
@@ -130,7 +128,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает общие исключения JWT.
+     * Handles general JWT exceptions.
      */
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ErrorResponse> handleJwtException(
@@ -215,10 +213,24 @@ public class GlobalExceptionHandler {
         );
     }
 
+    /**
+     * Handles custom access denied exceptions (different from Spring Security's AccessDeniedException).
+     */
+    @ExceptionHandler(com.example.bankcards.exception.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleCustomAccessDenied(
+            com.example.bankcards.exception.AccessDeniedException ex, HttpServletRequest request) {
+        return buildErrorResponse(
+            HttpStatus.FORBIDDEN, 
+            "ACCESS_DENIED", 
+            ex.getMessage(), 
+            request.getRequestURI()
+        );
+    }
+
     // ================= Validation Exceptions =================
     
     /**
-     * Обрабатывает исключения валидации входных данных.
+     * Handles input data validation exceptions.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(
@@ -241,11 +253,11 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения неподдерживаемого типа контента.
+     * Handles unsupported content type exceptions.
      */
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupported(
-            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+            @SuppressWarnings("unused") HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.UNSUPPORTED_MEDIA_TYPE,
             "UNSUPPORTED_MEDIA_TYPE",
@@ -255,7 +267,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения неправильного формата JSON.
+     * Handles malformed JSON exceptions.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
@@ -273,7 +285,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает исключения IllegalStateException.
+     * Handles IllegalStateException exceptions.
      */
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(
@@ -296,7 +308,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает общие исключения времени выполнения.
+     * Handles general runtime exceptions.
      */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(
@@ -311,7 +323,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает все остальные необработанные исключения.
+     * Handles all other unhandled exceptions.
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAllExceptions(
@@ -319,11 +331,10 @@ public class GlobalExceptionHandler {
         log.error("Unexpected error occurred", ex);
 
         String message = "An unexpected error occurred. Please check your input data and try again.";
-        if (ex.getMessage() != null && !ex.getMessage().isEmpty()) {
-            if (ex.getMessage().contains("NullPointerException") ||
-                    ex.getMessage().contains("IllegalArgumentException")) {
-                message = "Invalid request data. Please check your input and try again.";
-            }
+        if (ex.getMessage() != null && !ex.getMessage().isEmpty() && 
+            (ex.getMessage().contains("NullPointerException") ||
+             ex.getMessage().contains("IllegalArgumentException"))) {
+            message = "Invalid request data. Please check your input and try again.";
         }
         
         return buildErrorResponse(
@@ -337,7 +348,7 @@ public class GlobalExceptionHandler {
     // ================= Helper Method =================
     
     /**
-     * Вспомогательный метод для создания стандартизированного ответа с ошибкой.
+     * Helper method for creating standardized error response.
      */
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             HttpStatus status, String error, String message, String path) {

@@ -1,3 +1,3 @@
-# Тесты контроллеров
+# Controller Tests
 
-Unit тесты для REST API с использованием MockMvc.
+Unit tests for REST API using MockMvc.

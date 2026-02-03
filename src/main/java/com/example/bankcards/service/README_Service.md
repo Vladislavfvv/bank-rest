@@ -1,3 +1,3 @@
-# Сервисы
+# Services
 
-Бизнес-логика: управление пользователями, картами и переводами.
+Business logic: user management, cards and transfers.

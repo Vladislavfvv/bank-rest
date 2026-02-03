@@ -1,6 +1,6 @@
 package com.example.bankcards.util;
 
-import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.card.CardDto;
 import com.example.bankcards.entity.Card;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mapper;
@@ -15,16 +15,12 @@ public interface CardMapper {
 
     // Entity -> DTO mapping
     @Mapping(target = "userId", expression = "java(card.getUser() != null ? card.getUser().getId() : null)")
-    @Mapping(target = "maskedNumber", expression = "java(card.getMaskedNumber())")
-    @Mapping(target = "maskedExpirationDate", expression = "java(card.getMaskedExpirationDate())")
-    @Mapping(target = "cvv", ignore = true) // Никогда не маппим CVV в DTO
+    @Mapping(target = "cvv", ignore = true) // Never map CVV to DTO
     CardDto toDto(Card card);
 
     // DTO -> Entity mapping
-    @Mapping(target = "user", ignore = true) // User устанавливается отдельно в сервисе
-    @Mapping(target = "cvv", ignore = true) // CVV устанавливается отдельно
-    @Mapping(target = "maskedNumber", ignore = true) // Вычисляемое поле
-    @Mapping(target = "maskedExpirationDate", ignore = true) // Вычисляемое поле
+    @Mapping(target = "user", ignore = true) // User is set separately in service
+    @Mapping(target = "cvv", ignore = true) // CVV is set separately
     Card toEntity(CardDto dto);
 
     // Update existing entity from DTO
@@ -36,5 +32,5 @@ public interface CardMapper {
 
     // List mappings
     List<CardDto> cardsToDto(List<Card> cards);
-    List<Card> cardsToEntity(List<CardDto> cardDtos);
+    List<Card> cardsToEntity(List<CardDto> cardDtoList);
 }

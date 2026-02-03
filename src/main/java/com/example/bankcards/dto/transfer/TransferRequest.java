@@ -1,29 +1,46 @@
 package com.example.bankcards.dto.transfer;
 
-import jakarta.validation.constraints.*;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO for transfer request creation.
+ * Used to receive and validate transfer data from API clients.
+ * Contains all required fields for money transfer with comprehensive validation.
+ * CVV field is optional for additional security verification.
+ */
 @Data
 public class TransferRequest {
     
-    @NotNull(message = "ID карты отправителя обязателен")
+    @NotNull(message = "Sender card ID is required")
+    @Schema(description = "ID of the sender card", example = "1")
     private Long fromCardId;
 
-    @NotNull(message = "ID карты получателя обязателен")
+    @NotNull(message = "Recipient card ID is required")
+    @Schema(description = "ID of the recipient card", example = "2")
     private Long toCardId;
 
-    @NotNull(message = "Сумма перевода обязательна")
-    @DecimalMin(value = "0.01", message = "Сумма должна быть больше 0")
-    @Digits(integer = 13, fraction = 2, message = "Неверный формат суммы")
+    @NotNull(message = "Transfer amount is required")
+    @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
+    @Digits(integer = 13, fraction = 2, message = "Invalid amount format")
+    @Schema(description = "Transfer amount", example = "100.50")
     private BigDecimal amount;
 
-    @Size(max = 255, message = "Описание не может превышать 255 символов")
+    @Size(max = 255, message = "Description cannot exceed 255 characters")
+    @Schema(description = "Transfer description", example = "Payment for services")
     private String description;
 
-    @NotBlank(message = "CVV код обязателен для подтверждения перевода")
-    @Size(min = 3, max = 3, message = "CVV должен содержать ровно 3 цифры")
-    @Pattern(regexp = "\\d{3}", message = "CVV должен содержать только цифры")
+    // CVV is optional for additional security verification
+    @Size(min = 3, max = 3, message = "CVV must contain exactly 3 digits")
+    @Pattern(regexp = "\\d{3}", message = "CVV must contain only digits")
+    @Schema(description = "Optional CVV for additional security", example = "123", hidden = true)
     private String cvv;
 }

@@ -6,67 +6,69 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 
 @Repository
+@SuppressWarnings("SqlNoDataSourceInspection")
 public interface TransferRepository extends JpaRepository<Transfer, Long> {
 
     /**
-     * Найти все переводы пользователя (где он отправитель или получатель)
+     * Find all user transfers (where user is sender or receiver)
      */
     @Query("SELECT t FROM Transfer t " +
            "WHERE t.fromCard.user.email = :userEmail " +
            "OR t.toCard.user.email = :userEmail")
-    Page<Transfer> findByUserEmail(@Param("userEmail") String userEmail, Pageable pageable);
+    Page<Transfer> findByUserEmail(@Param("userEmail") @NonNull String userEmail, @NonNull Pageable pageable);
 
     /**
-     * Найти переводы конкретной карты
+     * Find transfers for specific card
      */
     @Query("SELECT t FROM Transfer t " +
            "WHERE t.fromCard.id = :cardId OR t.toCard.id = :cardId")
-    Page<Transfer> findByCardId(@Param("cardId") Long cardId, Pageable pageable);
+    Page<Transfer> findByCardId(@Param("cardId") @NonNull Long cardId, @NonNull Pageable pageable);
 
     /**
-     * Получить общую сумму приходов по карте (когда карта получатель)
+     * Get total income amount for card (when card is receiver)
      */
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transfer t " +
            "WHERE t.toCard.id = :cardId AND t.status = 'COMPLETED'")
-    BigDecimal getTotalIncomeByCardId(@Param("cardId") Long cardId);
+    BigDecimal getTotalIncomeByCardId(@Param("cardId") @NonNull Long cardId);
 
     /**
-     * Получить общую сумму расходов по карте (когда карта отправитель)
+     * Get total expense amount for card (when card is sender)
      */
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transfer t " +
            "WHERE t.fromCard.id = :cardId AND t.status = 'COMPLETED'")
-    BigDecimal getTotalExpenseByCardId(@Param("cardId") Long cardId);
+    BigDecimal getTotalExpenseByCardId(@Param("cardId") @NonNull Long cardId);
 
     /**
-     * Получить количество входящих переводов по карте
+     * Get count of incoming transfers for card
      */
     @Query("SELECT COUNT(t) FROM Transfer t " +
            "WHERE t.toCard.id = :cardId AND t.status = 'COMPLETED'")
-    Long getIncomeTransfersCountByCardId(@Param("cardId") Long cardId);
+    Long getIncomeTransfersCountByCardId(@Param("cardId") @NonNull Long cardId);
 
     /**
-     * Получить количество исходящих переводов по карте
+     * Get count of outgoing transfers for card
      */
     @Query("SELECT COUNT(t) FROM Transfer t " +
            "WHERE t.fromCard.id = :cardId AND t.status = 'COMPLETED'")
-    Long getExpenseTransfersCountByCardId(@Param("cardId") Long cardId);
+    Long getExpenseTransfersCountByCardId(@Param("cardId") @NonNull Long cardId);
 
     /**
-     * Получить общую сумму приходов по всем картам пользователя
+     * Get total income amount for all user cards
      */
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transfer t " +
            "WHERE t.toCard.user.id = :userId AND t.status = 'COMPLETED'")
-    BigDecimal getTotalIncomeByUserId(@Param("userId") Long userId);
+    BigDecimal getTotalIncomeByUserId(@Param("userId") @NonNull Long userId);
 
     /**
-     * Получить общую сумму расходов по всем картам пользователя
+     * Get total expense amount for all user cards
      */
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transfer t " +
            "WHERE t.fromCard.user.id = :userId AND t.status = 'COMPLETED'")
-    BigDecimal getTotalExpenseByUserId(@Param("userId") Long userId);
+    BigDecimal getTotalExpenseByUserId(@Param("userId") @NonNull Long userId);
 }

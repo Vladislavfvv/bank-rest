@@ -1,27 +1,9 @@
-# Конфигурация для тестового профиля
-spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  liquibase:
-    enabled: false # Отключаем Liquibase для тестов
+# Configuration for test profile
+# Used for unit tests with mocks - no DB needed
 
 jwt:
   secret: testSecretKey123456789012345678901234567890
-  expiration: 3600000 # 1 час для тестов
+  expiration: 3600000 # 1 hour for tests
 
 logging:
   level:

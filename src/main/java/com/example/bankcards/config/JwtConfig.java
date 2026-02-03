@@ -4,36 +4,41 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * JWT configuration properties.
+ * Binds JWT-related configuration from application.yml to Java objects.
+ * Contains token secrets, expiration times, and other JWT settings.
+ */
 @Data
 @Configuration
 @ConfigurationProperties(prefix = "jwt")
 public class JwtConfig {
     
     /**
-     * Секретный ключ для подписи JWT токенов.
-     * Должен быть минимум 32 символа для HS256.
+     * Secret key for signing JWT tokens.
+     * Must be at least 32 characters for HS256.
      */
     private String secret = "mySecretKey123456789012345678901234567890";
     
     /**
-     * Время жизни access токена в миллисекундах.
-     * По умолчанию 24 часа (86400000 мс).
+     * Access token lifetime in milliseconds.
+     * Default is 24 hours (86400000 ms).
      */
     private Long expiration = 86400000L;
     
     /**
-     * Время жизни refresh токена в миллисекундах.
-     * По умолчанию 7 дней (604800000 мс).
+     * Refresh token lifetime in milliseconds.
+     * Default is 7 days (604800000 ms).
      */
     private Long refreshExpiration = 604800000L;
     
     /**
-     * Issuer (издатель) токена.
+     * Token issuer.
      */
     private String issuer = "bankcards-api";
     
     /**
-     * Audience (аудитория) токена.
+     * Token audience.
      */
     private String audience = "bankcards-users";
 }

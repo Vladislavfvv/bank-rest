@@ -49,19 +49,14 @@ temp/
 EOF
 
 ### PostgreSQL / Local Database ###
-# Локальные данные DataGrip / IntelliJ
+# Local DataGrip / IntelliJ data
 dataSources/
 dataSources.local.xml
 storage_v2/
 
-# Каталоги данных Docker PostgreSQL (если появятся)
+# Docker PostgreSQL data directories (if they appear)
 pgdata/
 postgres-data/
 data/
 db/
 **/.env
-
-# SQLite / H2
-*.db
-*.mv.db
-*.h2.db

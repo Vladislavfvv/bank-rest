@@ -13,43 +13,43 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 /**
- * Компонент для создания и валидации JSON Web Token (JWT).
- * Используется библиотека io.jsonwebtoken (JJWT).
- * Генерирует access и refresh токены, валидирует токены, извлекает данные из токенов.
+ * Component for creating and validating JSON Web Token (JWT).
+ * Uses io.jsonwebtoken (JJWT) library.
+ * Generates access and refresh tokens, validates tokens, extracts data from tokens.
  */
 @Component
 public class JwtTokenProvider {
-    //Симметричный секрет, которым подписываются токены (HS256).
+    // Symmetric secret used to sign tokens (HS256).
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    //Срок действия access токена в миллисекундах.
+    // Access token expiration time in milliseconds.
     @Getter
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    //Срок действия refresh токена в миллисекундах.
-    @Value("${jwt.refresh.expiration}")
+    // Refresh token expiration time in milliseconds.
+    @Value("${jwt.refresh-expiration}")
     private long refreshExpiration;
 
-    //Генерация симметричного ключа для подписи токенов.
+    // Generation of symmetric key for token signing.
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
-    //Генерация access токена.
+    // Generation of access token.
     public String generateAccessToken(String username, Role role) {
         return generateToken(username, role, jwtExpiration);
     }
 
-    //Генерация refresh токена.
+    // Generation of refresh token.
     public String generateRefreshToken(String username, Role role) {
         return generateToken(username, role, refreshExpiration);
     }
 
-    // Генерация JWT токена с указанным сроком действия.
-    // В токен добавляются: имя пользователя (subject), роль, время создания и время истечения.
-    // Токен подписывается симметричным ключом с использованием алгоритма HS256.
+    // Generation of JWT token with specified expiration time.
+    // Token includes: username (subject), role, creation time and expiration time.
+    // Token is signed with symmetric key using HS256 algorithm.
     private String generateToken(String username, Role role, long jwtExpiration) {
         Date now = new Date();
         Date expireDate = new Date(now.getTime() + jwtExpiration);
@@ -63,8 +63,8 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    // Валидация JWT токена: проверка подписи и срока действия.
-    // Возвращает true, если токен валиден, false - если токен поврежден, истек или имеет неверную подпись.
+    // JWT token validation: checks signature and expiration time.
+    // Returns true if token is valid, false if token is corrupted, expired or has invalid signature.
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
@@ -77,7 +77,7 @@ public class JwtTokenProvider {
         }
     }
 
-    // Извлекает имя пользователя (email) из JWT токена (поле subject).
+    // Extracts username (email) from JWT token (subject field).
     public String getUsernameFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -87,7 +87,7 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    // Извлекает роль пользователя из JWT токена (поле "role" в claims).
+    // Extracts user role from JWT token ("role" field in claims).
     public String getRoleFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())
@@ -97,7 +97,7 @@ public class JwtTokenProvider {
         return claims.get("role", String.class);
     }
 
-    // Извлекает дату истечения срока действия токена.
+    // Extracts token expiration date.
     public Date getExpirationDateFromToken(String token) {
         Claims claims = Jwts.parser()
                 .verifyWith(getSigningKey())

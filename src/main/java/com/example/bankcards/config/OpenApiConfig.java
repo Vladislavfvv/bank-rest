@@ -13,6 +13,11 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 
+/**
+ * OpenAPI (Swagger) configuration for API documentation.
+ * Configures API information, servers, security schemes, and JWT authentication.
+ * Provides interactive API documentation accessible via Swagger UI.
+ */
 @Configuration
 public class OpenApiConfig {
 
@@ -22,12 +27,19 @@ public class OpenApiConfig {
     @Value("${server.servlet.context-path:/api/v1}")
     private String contextPath;
 
+    /**
+     * Custom OpenAPI configuration bean.
+     * Defines API metadata, server information, and JWT security scheme.
+     * Configures Bearer token authentication for protected endpoints.
+     * 
+     * @return configured OpenAPI instance
+     */
     @Bean
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
                         .title("Bank Cards Management API")
-                        .description("REST API для управления банковскими картами")
+                        .description("REST API for bank cards management")
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Bank Cards Team")
@@ -40,7 +52,7 @@ public class OpenApiConfig {
                                 .url("http://localhost:" + serverPort + contextPath)
                                 .description("Local Development Server"),
                         new Server()
-                                .url("https://api.bankcards.com/api/v1")
+                                .url("https://api.bankcards.com" + contextPath)
                                 .description("Production Server")))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new io.swagger.v3.oas.models.Components()
@@ -49,6 +61,6 @@ public class OpenApiConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("Введите JWT токен в формате: Bearer {token}")));
+                                        .description("Enter JWT token in format: Bearer {token}")));
     }
 }

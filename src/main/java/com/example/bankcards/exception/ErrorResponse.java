@@ -1,4 +1,4 @@
-package com.example.bankcards.dto;
+package com.example.bankcards.exception;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -19,7 +19,7 @@ public class ErrorResponse {
     private String error;
     private String message;
     private String path;
-    private List<String> details; // Для детализации ошибок валидации
+    private List<String> details; // For validation error details
 
     public ErrorResponse(int status, String error, String message, String path) {
         this.timestamp = LocalDateTime.now();

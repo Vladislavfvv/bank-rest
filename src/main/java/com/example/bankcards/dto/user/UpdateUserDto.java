@@ -1,6 +1,6 @@
 package com.example.bankcards.dto.user;
 
-import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.card.CardDto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
@@ -12,45 +12,21 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UpdateUserDto {
     /**
-     * Имя пользователя. Поддерживает оба варианта: "firstName" и "name"
+     * User's first name
      */
     private String firstName;
 
     /**
-     * Альтернативное имя для совместимости: "name" -> firstName
-     */
-    private String name;
-
-    /**
-     * Фамилия пользователя. Поддерживает оба варианта: "lastName" и "surname"
+     * User's last name
      */
     private String lastName;
-
-    /**
-     * Альтернативная фамилия для совместимости: "surname" -> lastName
-     */
-    private String surname;
-
-    /**
-     * Получить firstName (поддерживает оба варианта: firstName и name)
-     */
-    public String getFirstName() {
-        return firstName != null && !firstName.isBlank() ? firstName : (name != null && !name.isBlank() ? name : null);
-    }
-
-    /**
-     * Получить lastName (поддерживает оба варианта: lastName и surname)
-     */
-    public String getLastName() {
-        return lastName != null && !lastName.isBlank() ? lastName : (surname != null && !surname.isBlank() ? surname : null);
-    }
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthDate;
 
     /**
-     * Список карт для обновления.
-     * userId и holder будут автоматически заполнены из данных пользователя.
+     * List of cards to update.
+     * userId and holder will be automatically filled from user data.
      */
     private List<CardDto> cards;
 }

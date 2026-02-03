@@ -10,6 +10,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+/**
+ * DTO for creating user from JWT token information.
+ * Used when user needs to complete their profile after token-based authentication.
+ * Contains additional user details not available in the token (name, birth date).
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

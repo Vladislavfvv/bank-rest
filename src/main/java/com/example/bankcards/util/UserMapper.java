@@ -1,12 +1,20 @@
 package com.example.bankcards.util;
 
-import com.example.bankcards.dto.CardDto;
-import com.example.bankcards.dto.UserDto;
+import com.example.bankcards.dto.card.CardDto;
+import com.example.bankcards.dto.user.UserDto;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.entity.User;
-import org.mapstruct.*;
+import org.mapstruct.BeanMapping;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring", uses = {CardMapper.class})
@@ -19,23 +27,25 @@ public interface UserMapper {
 
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "isActive", ignore = true)
-    @Mapping(target = "cards", ignore = true) // Карты управляются отдельно
+    @Mapping(target = "cards", ignore = true) // Cards are managed separately
+    @Mapping(target = "password", ignore = true) // Password is not mapped from DTO
     User toEntity(UserDto dto);
 
-    // Update method для пользователя
+    // Update method for user
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "cards", ignore = true) // Карты обновляются отдельно
-    @Mapping(target = "password", ignore = true) // Пароль обновляется отдельно
+    @Mapping(target = "cards", ignore = true) // Cards are updated separately
+    @Mapping(target = "password", ignore = true) // Password is updated separately
+    @Mapping(target = "allCards", ignore = true) // Virtual field, not mapped
     void updateUserFromDto(UserDto dto, @MappingTarget User user);
 
     /**
-     * Обновление списка карт без зависимости от других мапперов.
-     * БЕЗОПАСНАЯ версия - CVV не копируется из DTO.
+     * Updates card list without dependency on other mappers.
+     * SAFE version - CVV is not copied from DTO.
      */
-    default List<Card> updateCards(User user, List<CardDto> cardDtos) {
-        if (cardDtos == null || cardDtos.isEmpty()) {
+    default List<Card> updateCards(User user, List<CardDto> cardDtoList) {
+        if (cardDtoList == null || cardDtoList.isEmpty()) {
             return new ArrayList<>();
         }
 
@@ -47,19 +57,19 @@ public interface UserMapper {
 
         List<Card> updatedCards = new ArrayList<>();
 
-        for (CardDto dto : cardDtos) {
+        for (CardDto dto : cardDtoList) {
             if (dto.getId() != null && existingCardsMap.containsKey(dto.getId())) {
-                // Обновляем существующую карту
+                // Update existing card
                 Card existingCard = existingCardsMap.get(dto.getId());
                 existingCard.setNumber(dto.getNumber());
                 existingCard.setHolder(dto.getHolder());
                 existingCard.setExpirationDate(dto.getExpirationDate());
                 existingCard.setBalance(dto.getBalance());
                 existingCard.setStatus(dto.getStatus());
-                // CVV НЕ обновляется из DTO по соображениям безопасности
+                // CVV is NOT updated from DTO for security reasons
                 updatedCards.add(existingCard);
             } else {
-                // Создаем новую карту
+                // Create new card
                 Card newCard = new Card();
                 newCard.setId(dto.getId());
                 newCard.setNumber(dto.getNumber());
@@ -68,7 +78,7 @@ public interface UserMapper {
                 newCard.setBalance(dto.getBalance());
                 newCard.setStatus(dto.getStatus());
                 newCard.setUser(user);
-                // CVV будет установлен отдельно в сервисе
+                // CVV will be set separately in service
                 updatedCards.add(newCard);
             }
         }

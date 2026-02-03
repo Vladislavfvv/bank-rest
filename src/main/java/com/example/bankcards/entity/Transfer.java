@@ -1,6 +1,17 @@
 package com.example.bankcards.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -13,6 +24,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@SuppressWarnings({"JpaDataSourceORMInspection"})
 public class Transfer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,24 +41,25 @@ public class Transfer {
     @Column(precision = 15, scale = 2, nullable = false)
     private BigDecimal amount;
 
-    @Column(length = 255)
+    @Column()
     private String description;
 
     @Column(name = "transfer_date", nullable = false)
-    private LocalDateTime transferDate = LocalDateTime.now();
+    private LocalDateTime transferDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TransferStatus status = TransferStatus.COMPLETED;
+    private TransferStatus status;
 
-    // Проверка, что перевод между картами одного пользователя
-    public boolean isSameUserTransfer() {
-        return fromCard != null && toCard != null && 
-               fromCard.getUser().getId().equals(toCard.getUser().getId());
-    }
-
-    // Получить пользователя (владельца карт)
+    // Get user (card owner)
     public User getUser() {
         return fromCard != null ? fromCard.getUser() : null;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        if (transferDate == null) {
+            transferDate = LocalDateTime.now();
+        }
     }
 }

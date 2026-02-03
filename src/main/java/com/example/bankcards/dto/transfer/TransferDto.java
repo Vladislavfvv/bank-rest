@@ -7,6 +7,11 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * DTO for transfer information display.
+ * Used to transfer complete transfer data between layers and for API responses.
+ * Contains transfer details with masked card numbers for security.
+ */
 @Data
 public class TransferDto {
     private Long id;

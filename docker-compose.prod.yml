@@ -1,0 +1,33 @@
+# docker-compose.prod.yml — production environment settings
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+version: '3.8'
+
+services:
+  # Production PostgreSQL settings
+  postgres:
+    restart: always
+    environment:
+      POSTGRES_DB: bankcards_prod
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    # Remove port from external access for security
+    ports: []
+
+  # Production application settings
+  app:
+    restart: always
+    environment:
+      # Database for production
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/bankcards_prod
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
+      
+      # Profiles for production
+      SPRING_PROFILES_ACTIVE: prod,docker
+
+volumes:
+  postgres_prod_data:
+    driver: local

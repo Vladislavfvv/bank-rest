@@ -1,5 +1,6 @@
-package com.example.bankcards.dto;
+package com.example.bankcards.dto.user;
 
+import com.example.bankcards.dto.card.CardDto;
 import com.example.bankcards.entity.Role;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
@@ -13,6 +14,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * DTO for complete user information transfer.
+ * Used for API responses and internal data exchange between layers.
+ * Contains full user profile with validation constraints and associated cards.
+ * Includes computed fields like full name and card count for convenience.
+ */
 @Data
 public class UserDto {
     private Long id;
@@ -41,12 +48,12 @@ public class UserDto {
 
     private Boolean isActive;
 
-    // Полное имя (вычисляемое поле)
+    // Full name (computed field)
     private String fullName;
 
-    @Valid // для вложенной валидации карт
+    @Valid // for nested card validation
     private List<CardDto> cards;
 
-    // Количество карт (вычисляемое поле)
+    // Number of cards (computed field)
     private Integer cardCount;
 }

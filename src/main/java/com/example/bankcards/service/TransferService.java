@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -41,9 +40,28 @@ public class TransferService {
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final TransferMapper transferMapper;
+    private final com.example.bankcards.service.CardService cardService;
 
     /**
-     * Выполнить перевод между картами пользователя
+     * Creates a PageRequest for transfer queries with descending order by transfer date.
+     */
+    private PageRequest createTransferPageRequest(int page, int size) {
+        return PageRequest.of(page, size, Sort.by("transferDate").descending());
+    }
+
+    /**
+     * Maps a Transfer entity to DTO with masked card numbers.
+     */
+    private TransferDto mapTransferToDto(Transfer transfer) {
+        TransferDto dto = transferMapper.toDto(transfer);
+        // Set masked numbers manually since TransferMapper can't use CardService
+        dto.setFromCardMaskedNumber(cardService.getMaskedNumberForCard(transfer.getFromCard()));
+        dto.setToCardMaskedNumber(cardService.getMaskedNumberForCard(transfer.getToCard()));
+        return dto;
+    }
+
+    /**
+     * Execute transfer between user cards
      */
     @Transactional
     @PreAuthorize("hasRole('USER')")
@@ -53,33 +71,36 @@ public class TransferService {
         
         log.info("Processing transfer request from user: {}", userEmail);
 
-        // Получаем карты
-        Card fromCard = cardRepository.findById(request.getFromCardId())
-                .orElseThrow(() -> new CardNotFoundException("Карта отправителя не найдена"));
+        // Get and validate sender card
+        Card fromCard = validateCardAccess(request.getFromCardId(), userEmail, "sender");
         
-        Card toCard = cardRepository.findById(request.getToCardId())
-                .orElseThrow(() -> new CardNotFoundException("Карта получателя не найдена"));
-
-        // Проверяем права доступа
-        validateUserAccess(userEmail, fromCard, toCard);
-        
-        // Проверяем CVV
-        if (!fromCard.verifyCvv(request.getCvv())) {
-            throw new InvalidTransferException("Неверный CVV код");
+        // Get recipient card - for security, don't reveal if it exists or not
+        Card toCard = cardRepository.findById(request.getToCardId()).orElse(null);
+        if (toCard == null) {
+            throw new com.example.bankcards.exception.AccessDeniedException("No access to recipient card");
         }
 
-        // Проверяем возможность перевода
+        // Check CVV if provided (optional additional security)
+        if (request.getCvv() != null && !request.getCvv().isEmpty()) {
+            if (!cardService.verifyCvvForCard(fromCard, request.getCvv())) {
+                throw new InvalidTransferException("Invalid CVV code");
+            }
+        }
+
+        // Check transfer possibility
         validateTransfer(fromCard, toCard, request.getAmount());
 
-        // Выполняем перевод
-        fromCard.debit(request.getAmount());
+        // Execute transfer
+        if (!fromCard.debit(request.getAmount())) {
+            throw new InsufficientFundsException("Failed to debit amount from card");
+        }
         toCard.credit(request.getAmount());
 
-        // Сохраняем карты
+        // Save cards
         cardRepository.save(fromCard);
         cardRepository.save(toCard);
 
-        // Создаем запись о переводе
+        // Create transfer record
         Transfer transfer = new Transfer();
         transfer.setFromCard(fromCard);
         transfer.setToCard(toCard);
@@ -89,14 +110,16 @@ public class TransferService {
 
         Transfer savedTransfer = transferRepository.save(transfer);
 
+        String fromMasked = cardService.getMaskedNumberForCard(fromCard);
+        String toMasked = cardService.getMaskedNumberForCard(toCard);
         log.info("Transfer completed successfully: {} -> {}, amount: {}", 
-                fromCard.getMaskedNumber(), toCard.getMaskedNumber(), request.getAmount());
+                fromMasked, toMasked, request.getAmount());
 
-        return transferMapper.toDto(savedTransfer);
+        return mapTransferToDto(savedTransfer);
     }
 
     /**
-     * Получить историю переводов пользователя
+     * Get user transfer history
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('USER')")
@@ -104,16 +127,14 @@ public class TransferService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = SecurityUtils.getEmailFromToken(auth);
 
-        PageRequest pageRequest = PageRequest.of(page, size, 
-                Sort.by("transferDate").descending());
-
+        PageRequest pageRequest = createTransferPageRequest(page, size);
         Page<Transfer> transfers = transferRepository.findByUserEmail(userEmail, pageRequest);
         
-        return transfers.map(transferMapper::toDto);
+        return transfers.map(this::mapTransferToDto);
     }
 
     /**
-     * Получить историю переводов по конкретной карте (для пользователя)
+     * Get transfer history for specific card (for user)
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('USER')")
@@ -121,59 +142,56 @@ public class TransferService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = SecurityUtils.getEmailFromToken(auth);
 
-        // Проверяем, что карта принадлежит пользователю
+        // Check that card belongs to user
         Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new CardNotFoundException("Карта не найдена"));
+                .orElseThrow(() -> new CardNotFoundException("Card not found"));
         
         if (!card.getUser().getEmail().equals(userEmail)) {
-            throw new InvalidTransferException("Нет доступа к истории переводов этой карты");
+            throw new com.example.bankcards.exception.AccessDeniedException("No access to transfer history of this card");
         }
 
-        PageRequest pageRequest = PageRequest.of(page, size, 
-                Sort.by("transferDate").descending());
-
+        PageRequest pageRequest = createTransferPageRequest(page, size);
         Page<Transfer> transfers = transferRepository.findByCardId(cardId, pageRequest);
         
-        return transfers.map(transferMapper::toDto);
+        return transfers.map(this::mapTransferToDto);
     }
 
     /**
-     * Получить историю переводов по конкретной карте (для админа)
+     * Get transfer history for specific card (for admin)
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public Page<TransferDto> getCardTransfersForAdmin(Long cardId, int page, int size) {
-        // Проверяем, что карта существует
+        // Check that card exists
         if (!cardRepository.existsById(cardId)) {
-            throw new CardNotFoundException("Карта не найдена");
+            throw new CardNotFoundException("Card not found");
         }
 
-        PageRequest pageRequest = PageRequest.of(page, size, 
-                Sort.by("transferDate").descending());
-
+        PageRequest pageRequest = createTransferPageRequest(page, size);
         Page<Transfer> transfers = transferRepository.findByCardId(cardId, pageRequest);
         
-        return transfers.map(transferMapper::toDto);
+        return transfers.map(this::mapTransferToDto);
     }
 
     /**
-     * Получить статистику переводов по карте (для админа)
+     * Get transfer statistics by card (for admin)
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public CardTransferStatsDto getCardTransferStats(Long cardId) {
-        // Проверяем, что карта существует
+        // Check that card exists
         Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new CardNotFoundException("Карта не найдена"));
+                .orElseThrow(() -> new CardNotFoundException("Card not found"));
 
         BigDecimal totalIncome = transferRepository.getTotalIncomeByCardId(cardId);
         BigDecimal totalExpense = transferRepository.getTotalExpenseByCardId(cardId);
         Long incomeCount = transferRepository.getIncomeTransfersCountByCardId(cardId);
         Long expenseCount = transferRepository.getExpenseTransfersCountByCardId(cardId);
 
+        String maskedNumber = cardService.getMaskedNumberForCard(card);
         return new CardTransferStatsDto(
                 cardId,
-                card.getMaskedNumber(),
+                maskedNumber,
                 totalIncome,
                 totalExpense,
                 card.getBalance(),
@@ -183,23 +201,20 @@ public class TransferService {
     }
 
     /**
-     * Получить статистику переводов по пользователю в разрезе карт (для админа)
+     * Get transfer statistics by user broken down by cards (for admin)
      */
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public UserTransferStatsDto getUserTransferStats(Long userId) {
-        // Проверяем, что пользователь существует
-        if (!userRepository.existsById(userId)) {
-            throw new UserNotFoundException("Пользователь не найден");
-        }
-
-        User user = userRepository.findById(userId).get();
+        // Check that user exists and get user
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         
-        // Получаем общую статистику по пользователю
+        // Get general statistics by user
         BigDecimal totalUserIncome = transferRepository.getTotalIncomeByUserId(userId);
         BigDecimal totalUserExpense = transferRepository.getTotalExpenseByUserId(userId);
         
-        // Получаем статистику по каждой карте пользователя
+        // Get statistics for each user card
         List<CardTransferStatsDto> cardStats = user.getCards().stream()
                 .map(card -> {
                     BigDecimal cardIncome = transferRepository.getTotalIncomeByCardId(card.getId());
@@ -207,9 +222,10 @@ public class TransferService {
                     Long incomeCount = transferRepository.getIncomeTransfersCountByCardId(card.getId());
                     Long expenseCount = transferRepository.getExpenseTransfersCountByCardId(card.getId());
                     
+                    String maskedNumber = cardService.getMaskedNumberForCard(card);
                     return new CardTransferStatsDto(
                             card.getId(),
-                            card.getMaskedNumber(),
+                            maskedNumber,
                             cardIncome,
                             cardExpense,
                             card.getBalance(),
@@ -217,9 +233,9 @@ public class TransferService {
                             expenseCount
                     );
                 })
-                .collect(Collectors.toList());
+                .toList();
 
-        // Общий баланс по всем картам
+        // Total balance across all cards
         BigDecimal totalBalance = user.getCards().stream()
                 .map(Card::getBalance)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -235,32 +251,34 @@ public class TransferService {
         );
     }
 
-    private void validateUserAccess(String userEmail, Card fromCard, Card toCard) {
-        if (!fromCard.getUser().getEmail().equals(userEmail)) {
-            throw new InvalidTransferException("Нет доступа к карте отправителя");
+    private Card validateCardAccess(Long cardId, String userEmail, String cardType) {
+        Card card = cardRepository.findById(cardId).orElse(null);
+        
+        // Always return access denied - don't reveal if card exists or not
+        if (card == null || !card.getUser().getEmail().equals(userEmail)) {
+            throw new com.example.bankcards.exception.AccessDeniedException("No access to " + cardType + " card");
         }
-        if (!toCard.getUser().getEmail().equals(userEmail)) {
-            throw new InvalidTransferException("Нет доступа к карте получателя");
-        }
+        
+        return card;
     }
 
     private void validateTransfer(Card fromCard, Card toCard, BigDecimal amount) {
-        // Проверяем, что карты разные
+        // Check that cards are different
         if (fromCard.getId().equals(toCard.getId())) {
-            throw new InvalidTransferException("Нельзя переводить на ту же карту");
+            throw new InvalidTransferException("Cannot transfer to the same card");
         }
 
-        // Проверяем статус карт
+        // Check card status
         if (!fromCard.isActive()) {
-            throw new InvalidTransferException("Карта отправителя неактивна");
+            throw new InvalidTransferException("Sender card is inactive");
         }
         if (!toCard.isActive()) {
-            throw new InvalidTransferException("Карта получателя неактивна");
+            throw new InvalidTransferException("Recipient card is inactive");
         }
 
-        // Проверяем баланс
+        // Check balance
         if (!fromCard.canDebit(amount)) {
-            throw new InsufficientFundsException("Недостаточно средств на карте");
+            throw new InsufficientFundsException("Insufficient funds on card");
         }
     }
 }

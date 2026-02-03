@@ -2,6 +2,7 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.transfer.TransferDto;
 import com.example.bankcards.dto.transfer.TransferRequest;
+import com.example.bankcards.dto.transfer.UserTransferStatsDto;
 import com.example.bankcards.service.TransferService;
 import com.example.bankcards.util.SecurityUtils;
 import jakarta.validation.Valid;
@@ -11,19 +12,25 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/transfers")
+@RequestMapping("/transfers")
 @RequiredArgsConstructor
 public class TransferController {
 
     private final TransferService transferService;
 
     /**
-     * Выполнить перевод между своими картами
-     * Доступно только для пользователей (USER)
+     * Transfer between own cards
+     * Available only for users (USER)
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping
@@ -42,8 +49,8 @@ public class TransferController {
     }
 
     /**
-     * Получить историю переводов пользователя
-     * Доступно только для пользователей (USER)
+     * Get user's transfer history
+     * Available only for users (USER)
      */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
@@ -62,8 +69,8 @@ public class TransferController {
     }
 
     /**
-     * Получить историю переводов по конкретной карте (для пользователя)
-     * Пользователь может видеть только историю своих карт
+     * Get transfer history for specific card (for user)
+     * User can only see history of their own cards
      */
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/card/{cardId}")
@@ -85,8 +92,8 @@ public class TransferController {
     }
 
     /**
-     * Получить историю переводов по конкретной карте (для админа)
-     * Админ может видеть историю любой карты
+     * Get transfer history for specific card (for admin)
+     * Admin can see history of any card
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/card/{cardId}")
@@ -108,8 +115,8 @@ public class TransferController {
     }
 
     /**
-     * Получить статистику переводов по карте (для админа)
-     * Показывает общий приход, расход, баланс и количество операций
+     * Get transfer statistics for card (for admin)
+     * Shows total income, expense, balance and number of operations
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/card/{cardId}/stats")
@@ -128,8 +135,8 @@ public class TransferController {
     }
 
     /**
-     * Получить статистику переводов по пользователю в разрезе карт (для админа)
-     * Показывает общий приход/расход по пользователю и детализацию по каждой карте
+     * Get transfer statistics for user by cards (for admin)
+     * Shows total income/expense for user and breakdown by each card
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/user/{userId}/stats")
@@ -140,7 +147,7 @@ public class TransferController {
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);
         log.info("Admin {} getting transfer stats for user: {}", adminEmail, userId);
 
-        com.example.bankcards.dto.transfer.UserTransferStatsDto stats = transferService.getUserTransferStats(userId);
+        UserTransferStatsDto stats = transferService.getUserTransferStats(userId);
         
         log.info("Admin {} retrieved transfer stats for user: {} (total income: {}, total expense: {}, cards: {})", 
                 adminEmail, userId, stats.getTotalIncome(), stats.getTotalExpense(), stats.getCardStats().size());

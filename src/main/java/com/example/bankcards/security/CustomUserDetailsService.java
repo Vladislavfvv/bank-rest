@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Сервис для загрузки пользователей из базы данных для Spring Security.
- * Реализует интерфейс UserDetailsService для интеграции с системой аутентификации.
+ * Service for loading users from database for Spring Security.
+ * Implements UserDetailsService interface for authentication system integration.
  */
 @Slf4j
 @Service
@@ -25,12 +25,12 @@ public class CustomUserDetailsService implements UserDetailsService {
     private final UserRepository userRepository;
 
     /**
-     * Загружает пользователя по email (username) из базы данных.
-     * Используется Spring Security для аутентификации.
+     * Loads user by email (username) from database.
+     * Used by Spring Security for authentication.
      *
-     * @param email email пользователя (используется как username)
-     * @return UserDetails объект с информацией о пользователе
-     * @throws UsernameNotFoundException если пользователь не найден
+     * @param email user email (used as username)
+     * @return UserDetails object with user information
+     * @throws UsernameNotFoundException if user not found
      */
     @Override
     @Transactional(readOnly = true)
@@ -43,28 +43,28 @@ public class CustomUserDetailsService implements UserDetailsService {
                     return new UsernameNotFoundException("User not found with email: " + email);
                 });
 
-        // Проверяем, что аккаунт активен
-        if (!user.isAccountActive()) {
+        // Check that account is active
+        if (user.isAccountInactive()) {
             log.warn("User account is disabled: {}", email);
             throw new UsernameNotFoundException("User account is disabled: " + email);
         }
 
-        // Создаем список ролей
+        // Create roles list
         List<SimpleGrantedAuthority> authorities = List.of(
                 new SimpleGrantedAuthority(user.getRole().name())
         );
 
         log.debug("User loaded successfully: {} with role: {}", email, user.getRole());
 
-        // Возвращаем Spring Security UserDetails
+        // Return Spring Security UserDetails
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
                 .authorities(authorities)
                 .accountExpired(false)
-                .accountLocked(!user.isAccountActive())
+                .accountLocked(user.isAccountInactive())
                 .credentialsExpired(false)
-                .disabled(!user.isAccountActive())
+                .disabled(user.isAccountInactive())
                 .build();
     }
 }

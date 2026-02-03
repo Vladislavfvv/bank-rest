@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * DTO для запроса обновления токена.
+ * DTO for token refresh request.
  */
 @NoArgsConstructor
 @AllArgsConstructor

@@ -6,15 +6,20 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+/**
+ * DTO for card transfer statistics.
+ * Contains aggregated transfer data for a specific card including income, expense, and balance.
+ * Used for financial reporting and analytics by card.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class CardTransferStatsDto {
     private Long cardId;
     private String cardMaskedNumber;
-    private BigDecimal totalIncome;    // Общий приход (когда карта получатель)
-    private BigDecimal totalExpense;   // Общий расход (когда карта отправитель)
-    private BigDecimal balance;        // Текущий баланс карты
-    private Long incomeTransfersCount; // Количество входящих переводов
-    private Long expenseTransfersCount; // Количество исходящих переводов
+    private BigDecimal totalIncome;    // Total income (when card is recipient)
+    private BigDecimal totalExpense;   // Total expense (when card is sender)
+    private BigDecimal balance;        // Current card balance
+    private Long incomeTransfersCount; // Number of incoming transfers
+    private Long expenseTransfersCount; // Number of outgoing transfers
 }

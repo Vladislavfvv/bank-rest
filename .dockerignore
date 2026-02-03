@@ -1,0 +1,56 @@
+# .dockerignore — exclude unnecessary files from Docker context
+
+# Git
+.git
+.gitignore
+
+# Maven
+target/
+!target/bankcards-*.jar
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Documentation
+README*.md
+docs/
+
+# Test files
+src/test/
+
+# Environment
+.env
+.env.local
+.env.example
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Node modules (if frontend exists)
+node_modules/
+npm-debug.log*
+
+# Coverage reports
+coverage/
+*.lcov
