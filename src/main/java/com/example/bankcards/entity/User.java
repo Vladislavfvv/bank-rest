@@ -82,6 +82,7 @@ public class User {
     }
 
     // Check account activity
+    @SuppressWarnings("unused")
     public boolean isAccountActive() {
         return isActive != null && isActive;
     }

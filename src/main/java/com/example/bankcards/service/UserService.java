@@ -206,6 +206,7 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
+    @SuppressWarnings("unused")
     @Transactional(readOnly = true)
     public UserDto getUserByEmailJPQl(String email) {
         User user = userRepository.findByEmailJPQL(email)
@@ -214,6 +215,7 @@ public class UserService {
         return userMapper.toDto(user);
     }
 
+    @SuppressWarnings("unused")
     @Transactional(readOnly = true)
     public UserDto getUserByEmailNative(String email) {
         User user = userRepository.findByEmailNativeQuery(email)
@@ -686,6 +688,7 @@ public class UserService {
     /**
      * Update user by ID (only for admin)
      */
+    @SuppressWarnings("unused")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public UserDto updateUserByAdminId(Long id, UpdateUserDto dto) {

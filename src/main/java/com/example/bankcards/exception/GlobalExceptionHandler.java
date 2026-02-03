@@ -24,11 +24,13 @@ import java.util.List;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    
+    private static final String ACCESS_DENIED = "ACCESS_DENIED";
 
     // ================= Authentication & Security Exceptions =================
     
     /**
-     * Handles authentication exceptions from our service.
+     * Handles authentication exceptions from service.
      */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(
@@ -63,7 +65,7 @@ public class GlobalExceptionHandler {
             @SuppressWarnings("unused") AccessDeniedException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.FORBIDDEN, 
-            "ACCESS_DENIED", 
+            ACCESS_DENIED, 
             "Access denied. Insufficient permissions.", 
             request.getRequestURI()
         );
@@ -221,7 +223,7 @@ public class GlobalExceptionHandler {
             com.example.bankcards.exception.AccessDeniedException ex, HttpServletRequest request) {
         return buildErrorResponse(
             HttpStatus.FORBIDDEN, 
-            "ACCESS_DENIED", 
+            ACCESS_DENIED, 
             ex.getMessage(), 
             request.getRequestURI()
         );
@@ -294,7 +296,7 @@ public class GlobalExceptionHandler {
         if (message != null && (message.contains("Email") || message.contains("token") || message.contains("Authentication"))) {
             return buildErrorResponse(
                 HttpStatus.FORBIDDEN, 
-                "ACCESS_DENIED", 
+                ACCESS_DENIED, 
                 "Access denied: You can only update your own information.", 
                 request.getRequestURI()
             );

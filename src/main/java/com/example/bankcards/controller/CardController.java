@@ -11,6 +11,14 @@ import com.example.bankcards.service.BlockRequestService;
 import com.example.bankcards.service.CardService;
 import com.example.bankcards.service.UserService;
 import com.example.bankcards.util.SecurityUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +47,8 @@ import java.time.LocalDate;
 @RequestMapping("/cards")
 @RequiredArgsConstructor
 @SuppressWarnings({"all", "SimilarLogMessages"})
+@Tag(name = "Cards", description = "Управление банковскими картами")
+@SecurityRequirement(name = "bearerAuth")
 public class CardController {
 
     private final CardService cardService;
@@ -72,9 +82,28 @@ public class CardController {
      * ADMIN: can get any card.
      * USER: can get only their own cards.
      */
+    @Operation(
+        summary = "Получить карту по ID",
+        description = "Возвращает информацию о банковской карте. Пользователи могут получать только свои карты, администраторы - любые."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Карта найдена",
+            content = @Content(schema = @Schema(implementation = CardDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет доступа к карте"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @GetMapping("/{id}")
     public ResponseEntity<CardDto> getCardById(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             Authentication authentication) {
         CardDto card = cardService.getCardById(id);
 
@@ -99,14 +128,28 @@ public class CardController {
      * - expirationDateTo: filter by expiration date (to)
      * - lastFourDigits: search by last 4 digits of card number
      */
+    @Operation(
+        summary = "Получить список карт",
+        description = "Возвращает список банковских карт с возможностью фильтрации. Пользователи видят только свои карты, администраторы - все карты."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Список карт получен успешно"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Не авторизован"
+        )
+    })
     @GetMapping
     public ResponseEntity<Page<CardDto>> getAllCards(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Status status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expirationDateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expirationDateTo,
-            @RequestParam(required = false) String lastFourDigits,
+            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Статус карты") @RequestParam(required = false) Status status,
+            @Parameter(description = "Дата истечения от") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expirationDateFrom,
+            @Parameter(description = "Дата истечения до") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expirationDateTo,
+            @Parameter(description = "Последние 4 цифры номера карты") @RequestParam(required = false) String lastFourDigits,
             Authentication authentication) {
         
         String userEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -139,9 +182,28 @@ public class CardController {
      * USER: can get CVV only for their own cards.
      * ADMIN: can get CVV for any card.
      */
+    @Operation(
+        summary = "Получить CVV код карты",
+        description = "Возвращает CVV код карты для верификации переводов. Пользователи могут получать CVV только своих карт."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "CVV код получен успешно",
+            content = @Content(schema = @Schema(type = "string", example = "123"))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет доступа к данной карте"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @GetMapping("/{id}/cvv")
     public ResponseEntity<String> getCardCvv(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             Authentication authentication) {
         
         String userEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -158,9 +220,32 @@ public class CardController {
      * ADMIN: can update any card.
      * USER: cannot update cards.
      */
+    @Operation(
+        summary = "Обновить карту",
+        description = "Обновляет данные банковской карты. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Карта успешно обновлена",
+            content = @Content(schema = @Schema(implementation = CardDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Некорректные данные карты"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @PutMapping("/{id}")
     public ResponseEntity<CardDto> updateCard(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             @Valid @RequestBody CardDto dto,
             Authentication authentication) {
         // Get current card for access check
@@ -180,9 +265,31 @@ public class CardController {
      * Only ADMIN can delete cards.
      * USER cannot delete cards.
      */
+    @Operation(
+        summary = "Удалить карту",
+        description = "Удаляет банковскую карту из системы. Также удаляются все связанные переводы и запросы на блокировку. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Карта успешно удалена"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Невозможно удалить карту - есть связанные данные"
+        )
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCard(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             Authentication authentication) {
         // Access check: only ADMIN can delete cards
         if (!SecurityUtils.isAdmin(authentication)) {
@@ -201,10 +308,33 @@ public class CardController {
     /**
      * Create card for user (admin only)
      */
+    @Operation(
+        summary = "Создать карту для пользователя",
+        description = "Создает новую банковскую карту для указанного пользователя. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Карта успешно создана",
+            content = @Content(schema = @Schema(implementation = CardDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Пользователь не найден"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Некорректные данные карты"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/create-for-user/{userId}")
     public ResponseEntity<CardDto> createCardForUser(
-            @PathVariable Long userId,
+            @Parameter(description = "ID пользователя") @PathVariable Long userId,
             @Valid @RequestBody CreateCardRequest request,
             Authentication authentication) {
 
@@ -220,10 +350,29 @@ public class CardController {
     /**
      * Block card (admin only)
      */
+    @Operation(
+        summary = "Заблокировать карту",
+        description = "Блокирует банковскую карту. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Карта успешно заблокирована",
+            content = @Content(schema = @Schema(implementation = CardDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/{id}/block")
     public ResponseEntity<CardDto> blockCard(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             Authentication authentication) {
 
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -238,10 +387,29 @@ public class CardController {
     /**
      * Activate (unblock) card (admin only)
      */
+    @Operation(
+        summary = "Активировать карту",
+        description = "Активирует (разблокирует) банковскую карту. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Карта успешно активирована",
+            content = @Content(schema = @Schema(implementation = CardDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/{id}/activate")
     public ResponseEntity<CardDto> activateCard(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             Authentication authentication) {
 
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -300,10 +468,33 @@ public class CardController {
      * Request blocking of own card (for users)
      * User cannot block card themselves, but can send request to admin
      */
+    @Operation(
+        summary = "Запросить блокировку карты",
+        description = "Создает запрос на блокировку карты. Пользователи могут запрашивать блокировку только своих карт. Запрос будет рассмотрен администратором."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Запрос на блокировку создан успешно",
+            content = @Content(schema = @Schema(implementation = BlockRequestDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет доступа к данной карте"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Запрос на блокировку уже существует"
+        )
+    })
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/{id}/request-block")
     public ResponseEntity<BlockRequestDto> requestCardBlock(
-            @PathVariable Long id,
+            @Parameter(description = "ID карты") @PathVariable Long id,
             @Valid @RequestBody CreateBlockRequest request,
             Authentication authentication) {
 
@@ -394,10 +585,33 @@ public class CardController {
     /**
      * Approve block request (admin only)
      */
+    @Operation(
+        summary = "Одобрить запрос на блокировку карты",
+        description = "Одобряет запрос пользователя на блокировку карты и автоматически блокирует карту. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Запрос одобрен, карта заблокирована",
+            content = @Content(schema = @Schema(implementation = BlockRequestDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Запрос на блокировку не найден"
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Запрос уже обработан"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/block-requests/{requestId}/approve")
     public ResponseEntity<BlockRequestDto> approveBlockRequest(
-            @PathVariable Long requestId,
+            @Parameter(description = "ID запроса на блокировку") @PathVariable Long requestId,
             @RequestBody(required = false) String adminComment,
             Authentication authentication) {
 
@@ -414,10 +628,33 @@ public class CardController {
     /**
      * Reject block request (admin only)
      */
+    @Operation(
+        summary = "Отклонить запрос на блокировку карты",
+        description = "Отклоняет запрос пользователя на блокировку карты. Карта остается активной. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Запрос отклонен",
+            content = @Content(schema = @Schema(implementation = BlockRequestDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Запрос на блокировку не найден"
+        ),
+        @ApiResponse(
+            responseCode = "409",
+            description = "Запрос уже обработан"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/block-requests/{requestId}/reject")
     public ResponseEntity<BlockRequestDto> rejectBlockRequest(
-            @PathVariable Long requestId,
+            @Parameter(description = "ID запроса на блокировку") @PathVariable Long requestId,
             @RequestBody(required = false) String adminComment,
             Authentication authentication) {
 

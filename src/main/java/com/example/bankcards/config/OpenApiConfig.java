@@ -38,11 +38,11 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Bank Cards Management API")
-                        .description("REST API for bank cards management")
+                        .title("API Управления Банковскими Картами")
+                        .description("REST API для управления банковскими картами, пользователями и переводами")
                         .version("1.0.0")
                         .contact(new Contact()
-                                .name("Bank Cards Team")
+                                .name("Команда Bank Cards")
                                 .email("support@bankcards.com"))
                         .license(new License()
                                 .name("MIT License")
@@ -50,17 +50,17 @@ public class OpenApiConfig {
                 .servers(List.of(
                         new Server()
                                 .url("http://localhost:" + serverPort + contextPath)
-                                .description("Local Development Server"),
+                                .description("Локальный сервер разработки"),
                         new Server()
                                 .url("https://api.bankcards.com" + contextPath)
-                                .description("Production Server")))
-                .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
+                                .description("Продакшн сервер")))
+                .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new io.swagger.v3.oas.models.Components()
-                        .addSecuritySchemes("Bearer Authentication",
+                        .addSecuritySchemes("bearerAuth",
                                 new SecurityScheme()
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("Enter JWT token in format: Bearer {token}")));
+                                        .description("Введите JWT токен в формате: Bearer {token}")));
     }
 }

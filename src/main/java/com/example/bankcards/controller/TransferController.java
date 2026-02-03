@@ -5,6 +5,14 @@ import com.example.bankcards.dto.transfer.TransferRequest;
 import com.example.bankcards.dto.transfer.UserTransferStatsDto;
 import com.example.bankcards.service.TransferService;
 import com.example.bankcards.util.SecurityUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/transfers")
 @RequiredArgsConstructor
+@Tag(name = "Transfers", description = "Управление переводами между картами")
+@SecurityRequirement(name = "bearerAuth")
 public class TransferController {
 
     private final TransferService transferService;
@@ -32,6 +42,29 @@ public class TransferController {
      * Transfer between own cards
      * Available only for users (USER)
      */
+    @Operation(
+        summary = "Перевод между картами",
+        description = "Выполнение перевода денежных средств между картами. Пользователи могут переводить с собственных карт на любые карты в системе."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Перевод выполнен успешно",
+            content = @Content(schema = @Schema(implementation = TransferDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Некорректные данные перевода"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет доступа к карте отправителя"
+        ),
+        @ApiResponse(
+            responseCode = "422",
+            description = "Недостаточно средств на карте"
+        )
+    })
     @PreAuthorize("hasRole('USER')")
     @PostMapping
     public ResponseEntity<TransferDto> transferBetweenCards(
@@ -52,11 +85,29 @@ public class TransferController {
      * Get user's transfer history
      * Available only for users (USER)
      */
+    @Operation(
+        summary = "Получить историю переводов пользователя",
+        description = "Возвращает постраничный список всех переводов текущего пользователя (как входящих, так и исходящих)."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "История переводов получена успешно"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Не авторизован"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуется роль USER"
+        )
+    })
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/my")
     public ResponseEntity<Page<TransferDto>> getMyTransfers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
         
         String userEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -72,12 +123,30 @@ public class TransferController {
      * Get transfer history for specific card (for user)
      * User can only see history of their own cards
      */
+    @Operation(
+        summary = "Получить историю переводов карты",
+        description = "Возвращает постраничный список всех переводов указанной карты. Пользователи могут получать историю только своих карт."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "История переводов карты получена успешно"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет доступа к данной карте"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/card/{cardId}")
     public ResponseEntity<Page<TransferDto>> getCardTransfers(
-            @PathVariable Long cardId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "ID карты") @PathVariable Long cardId,
+            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
         
         String userEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -95,12 +164,30 @@ public class TransferController {
      * Get transfer history for specific card (for admin)
      * Admin can see history of any card
      */
+    @Operation(
+        summary = "Получить историю переводов карты (для администратора)",
+        description = "Возвращает постраничный список всех переводов указанной карты. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "История переводов карты получена успешно"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/card/{cardId}")
     public ResponseEntity<Page<TransferDto>> getCardTransfersForAdmin(
-            @PathVariable Long cardId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "ID карты") @PathVariable Long cardId,
+            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
         
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -118,10 +205,29 @@ public class TransferController {
      * Get transfer statistics for card (for admin)
      * Shows total income, expense, balance and number of operations
      */
+    @Operation(
+        summary = "Получить статистику переводов карты",
+        description = "Возвращает статистику переводов для указанной карты: общий доход, расход, баланс и количество операций. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Статистика получена успешно",
+            content = @Content(schema = @Schema(implementation = com.example.bankcards.dto.transfer.CardTransferStatsDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Карта не найдена"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/card/{cardId}/stats")
     public ResponseEntity<com.example.bankcards.dto.transfer.CardTransferStatsDto> getCardTransferStats(
-            @PathVariable Long cardId,
+            @Parameter(description = "ID карты") @PathVariable Long cardId,
             Authentication authentication) {
         
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -138,6 +244,25 @@ public class TransferController {
      * Get transfer statistics for user by cards (for admin)
      * Shows total income/expense for user and breakdown by each card
      */
+    @Operation(
+        summary = "Получить статистику переводов пользователя",
+        description = "Возвращает статистику переводов для всех карт указанного пользователя: общий доход, расход и детализацию по каждой карте. Доступно только администраторам."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Статистика получена успешно",
+            content = @Content(schema = @Schema(implementation = com.example.bankcards.dto.transfer.UserTransferStatsDto.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Доступ запрещен - требуются права администратора"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Пользователь не найден"
+        )
+    })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/user/{userId}/stats")
     public ResponseEntity<com.example.bankcards.dto.transfer.UserTransferStatsDto> getUserTransferStats(

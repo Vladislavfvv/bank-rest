@@ -1,5 +1,6 @@
 package com.example.bankcards.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
@@ -13,6 +14,7 @@ import java.util.Properties;
  * Only active for 'local' profile to avoid conflicts with Docker Compose or production environments.
  * Reads .env file from project root and sets system properties for Spring Boot configuration.
  */
+@Slf4j
 @Configuration
 @Profile("local")
 public class DotenvConfig {
@@ -25,13 +27,13 @@ public class DotenvConfig {
      */
     @PostConstruct
     public void loadDotenv() {
-        System.out.println("🔧 DotenvConfig activated for 'local' profile");
+        log.info("🔧 DotenvConfig activated for 'local' profile");
         
-        try {
+        try (FileInputStream fileInputStream = new FileInputStream(".env")) {
             Properties props = new Properties();
-            props.load(new FileInputStream(".env"));
+            props.load(fileInputStream);
             
-            System.out.println("✅ Found .env file, loading variables...");
+            log.info("✅ Found .env file, loading variables...");
             
             props.forEach((key, value) -> {
                 String keyStr = key.toString();
@@ -40,16 +42,16 @@ public class DotenvConfig {
                 // Skip comments and empty lines
                 if (!keyStr.startsWith("#") && !keyStr.trim().isEmpty()) {
                     System.setProperty(keyStr, valueStr);
-                    System.out.println("✅ Set " + keyStr + " = " + 
+                    log.info("✅ Set {} = {}", keyStr, 
                         (keyStr.contains("PASSWORD") || keyStr.contains("SECRET") ? "***" : valueStr));
                 }
             });
             
-            System.out.println("🎯 .env file loaded successfully!");
+            log.info("🎯 .env file loaded successfully!");
             
         } catch (IOException e) {
-            System.err.println("⚠️ Could not load .env file: " + e.getMessage());
-            System.err.println("💡 Make sure .env file exists in project root");
+            log.warn("⚠️ Could not load .env file: {}", e.getMessage());
+            log.info("💡 Make sure .env file exists in project root");
         }
     }
 }

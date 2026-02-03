@@ -49,6 +49,7 @@ public class CardService {
     private static final String PREFIX_CARD_WITH_ID = "Card with id ";
     private static final String USER_NOT_FOUND_WITH_ID = "User not found with id:";
 
+    @SuppressWarnings("unused")
     @PreAuthorize("hasAnyRole('ADMIN')")
     public CardDto save(CardDto dto) {
         User user = userRepository.findById(dto.getUserId())

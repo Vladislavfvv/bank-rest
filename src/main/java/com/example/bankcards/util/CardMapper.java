@@ -32,5 +32,6 @@ public interface CardMapper {
 
     // List mappings
     List<CardDto> cardsToDto(List<Card> cards);
+    @SuppressWarnings("unused")
     List<Card> cardsToEntity(List<CardDto> cardDtoList);
 }

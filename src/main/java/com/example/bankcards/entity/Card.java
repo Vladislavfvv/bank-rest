@@ -63,6 +63,7 @@ public class Card {
     private Status status = Status.ACTIVE;
 
     // Method to display masked card number
+    @SuppressWarnings("unused")
     public String getMaskedNumber() {
         if (number == null || number.length() < 4) {
             return "****";
@@ -73,6 +74,7 @@ public class Card {
 
 
     // Masked expiration date (MM/YY)
+    @SuppressWarnings("unused")
     public String getMaskedExpirationDate() {
         if (expirationDate == null) {
             return "**/**";

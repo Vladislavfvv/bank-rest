@@ -11,8 +11,10 @@ import java.util.Optional;
 
 @SuppressWarnings("SqlNoDataSourceInspection")
 public interface UserRepository extends JpaRepository<User,Long> {
+    @SuppressWarnings("unused")
     User getUserById(@NonNull Long aLong);
 
+    @SuppressWarnings("unused")
     List<User> getUsersByEmail(@NonNull String email);
 
     // Uses @NamedQuery from User.java
@@ -23,7 +25,7 @@ public interface UserRepository extends JpaRepository<User,Long> {
     Optional<User> findByEmailJPQL(@Param("email") @NonNull String email);
 
     // Native SQL query
-    @Query(value = "SELECT * from public.users u where u.email = :email", nativeQuery=true)
+    @Query(value = "SELECT * FROM users u WHERE u.email = :email", nativeQuery=true)
     Optional<User> findByEmailNativeQuery(@Param("email") @NonNull String email);
 
     // Search users by email pattern (for admin)

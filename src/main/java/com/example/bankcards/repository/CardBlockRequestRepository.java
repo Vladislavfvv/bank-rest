@@ -18,6 +18,7 @@ public interface CardBlockRequestRepository extends JpaRepository<CardBlockReque
      * Finds all block requests by status with pagination.
      * Used by admin to filter requests by status.
      */
+    @SuppressWarnings("unused")
     Page<CardBlockRequest> findByStatus(@NonNull RequestStatus status, @NonNull Pageable pageable);
     
     /**
