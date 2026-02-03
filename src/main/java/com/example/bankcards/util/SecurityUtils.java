@@ -42,25 +42,22 @@ public class SecurityUtils {
         // Try to extract from JWT token first
         Jwt jwt = extractJwt(authentication);
         if (jwt != null) {
-            String email = jwt.getSubject();
-            if (email != null && !email.isBlank()) {
-                return email;
+            String subject = jwt.getSubject();
+            if (subject != null && !subject.isBlank()) {
+                return subject;
             }
         }
 
         // If JWT extraction failed, try to get email from principal (username)
         // This works with UsernamePasswordAuthenticationToken created by JwtAuthenticationFilter
-        if (authentication.getPrincipal() instanceof String principal) {
-            String email = principal;
-            if (email != null && !email.isBlank()) {
-                return email;
-            }
+        if (authentication.getPrincipal() instanceof String principal && !principal.isBlank()) {
+            return principal;
         }
 
         // If principal is not a String, try getName() which returns the principal name
-        String email = authentication.getName();
-        if (email != null && !email.isBlank()) {
-            return email;
+        String name = authentication.getName();
+        if (name != null && !name.isBlank()) {
+            return name;
         }
 
         throw new IllegalStateException("Email not found in JWT token or authentication principal");
