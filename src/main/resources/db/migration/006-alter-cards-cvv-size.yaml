@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-alter-cards-cvv-size
+      author: vlad
+      comment: "Alter cvv column size to accommodate encrypted values"
+      changes:
+        - modifyDataType:
+            tableName: cards
+            columnName: cvv
+            newDataType: VARCHAR(256)
+            schemaName: public
+      rollback:
+        - modifyDataType:
+            tableName: cards
+            columnName: cvv
+            newDataType: VARCHAR(4)
+            schemaName: public
+

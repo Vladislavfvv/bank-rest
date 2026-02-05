@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 @SuppressWarnings({"all", "SimilarLogMessages"})
-@Tag(name = "Users", description = "Управление пользователями")
+@Tag(name = "Users", description = "User management")
 @SecurityRequirement(name = "bearerAuth")
 public class UserController {
     private final UserService userService;
@@ -49,22 +49,22 @@ public class UserController {
      * @return current user data
      */
     @Operation(
-        summary = "Получить данные текущего пользователя",
-        description = "Возвращает информацию о пользователе, извлеченную из JWT токена"
+        summary = "Get current user data",
+        description = "Returns information about the user extracted from JWT token"
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Данные пользователя получены успешно",
+            description = "User data retrieved successfully",
             content = @Content(schema = @Schema(implementation = UserDto.class))
         ),
         @ApiResponse(
             responseCode = "401",
-            description = "Не авторизован"
+            description = "Unauthorized"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Пользователь не найден"
+            description = "User not found"
         )
     })
     @GetMapping("/self")
@@ -105,22 +105,22 @@ public class UserController {
 //    }
 
     @Operation(
-        summary = "Создать нового пользователя",
-        description = "Создание нового пользователя в системе. Доступно только администраторам."
+        summary = "Create new user",
+        description = "Create new user in the system. Available only to administrators."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Пользователь успешно создан",
+            description = "User successfully created",
             content = @Content(schema = @Schema(implementation = UserDto.class))
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Некорректные данные пользователя"
+            description = "Invalid user data"
         ),
         @ApiResponse(
             responseCode = "409",
-            description = "Пользователь с таким email уже существует"
+            description = "User with this email already exists"
         )
     })
     @PostMapping
@@ -134,27 +134,27 @@ public class UserController {
      * USER: can get only their own information.
      */
     @Operation(
-        summary = "Получить пользователя по ID",
-        description = "Возвращает информацию о пользователе по его ID. Пользователи могут получать только свою информацию."
+        summary = "Get user by ID",
+        description = "Returns user information by ID. Users can only get their own information."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Пользователь найден",
+            description = "User found",
             content = @Content(schema = @Schema(implementation = UserDto.class))
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Нет доступа к данному пользователю"
+            description = "No access to this user"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Пользователь не найден"
+            description = "User not found"
         )
     })
     @GetMapping("/id")
     public ResponseEntity<UserDto> getUserById(
-            @Parameter(description = "ID пользователя") @RequestParam Long id,
+            @Parameter(description = "User ID") @RequestParam Long id,
             Authentication authentication) {
         UserDto user = userService.findUserById(id);
 
@@ -171,25 +171,25 @@ public class UserController {
      * Available only for ADMIN.
      */
     @Operation(
-        summary = "Получить список всех пользователей",
-        description = "Возвращает постраничный список всех пользователей системы. Доступно только администраторам."
+        summary = "Get list of all users",
+        description = "Returns paginated list of all system users. Available only to administrators."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Список пользователей получен успешно",
+            description = "User list retrieved successfully",
             content = @Content(schema = @Schema(implementation = PagedUserResponse.class))
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Доступ запрещен - требуются права администратора"
+            description = "Access denied - administrator rights required"
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<PagedUserResponse> getUsers(
-            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "5") int size) {
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "5") int size) {
         return ResponseEntity.ok(userService.findAllUsers(page, size));
     }
 
@@ -199,27 +199,27 @@ public class UserController {
      * USER: can get only their own information.
      */
     @Operation(
-        summary = "Получить пользователя по email",
-        description = "Возвращает информацию о пользователе по его email. Пользователи могут получать только свою информацию."
+        summary = "Get user by email",
+        description = "Returns user information by email. Users can only get their own information."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Пользователь найден",
+            description = "User found",
             content = @Content(schema = @Schema(implementation = UserDto.class))
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Нет доступа к данному пользователю"
+            description = "No access to this user"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Пользователь не найден"
+            description = "User not found"
         )
     })
     @GetMapping("/email")
     public ResponseEntity<UserDto> getUserByEmail(
-            @Parameter(description = "Email пользователя") @RequestParam String email,
+            @Parameter(description = "User email") @RequestParam String email,
             Authentication authentication) {
         log.info("Getting user by email: {} (requested by: {})",
                 email, authentication != null ? SecurityUtils.getEmailFromToken(authentication) : "unknown");
@@ -252,26 +252,26 @@ public class UserController {
      * Email is taken from token, holder for cards is automatically formed from firstName + lastName.
      */
     @Operation(
-        summary = "Обновить профиль текущего пользователя",
-        description = "Обновляет профиль текущего пользователя. Email извлекается из JWT токена. Выполняется частичное обновление - обновляются только переданные поля."
+        summary = "Update current user profile",
+        description = "Updates current user profile. Email is extracted from JWT token. Performs partial update - only provided fields are updated."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Профиль успешно обновлен",
+            description = "Profile successfully updated",
             content = @Content(schema = @Schema(implementation = UserDto.class))
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Некорректные данные пользователя"
+            description = "Invalid user data"
         ),
         @ApiResponse(
             responseCode = "401",
-            description = "Не авторизован"
+            description = "Unauthorized"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Пользователь не найден"
+            description = "User not found"
         )
     })
     @PutMapping("/me")
@@ -304,31 +304,31 @@ public class UserController {
      * Holder for cards is automatically formed from name + surname.
      */
     @Operation(
-        summary = "Обновить пользователя по ID",
-        description = "Обновляет данные пользователя по его ID. Выполняется частичное обновление - обновляются только переданные поля. Доступно только администраторам."
+        summary = "Update user by ID",
+        description = "Updates user data by ID. Performs partial update - only provided fields are updated. Available only to administrators."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Пользователь успешно обновлен",
+            description = "User successfully updated",
             content = @Content(schema = @Schema(implementation = UserDto.class))
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Некорректные данные пользователя"
+            description = "Invalid user data"
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Доступ запрещен - требуются права администратора"
+            description = "Access denied - administrator rights required"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Пользователь не найден"
+            description = "User not found"
         )
     })
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> updateUser(
-            @Parameter(description = "ID пользователя") @PathVariable Long id,
+            @Parameter(description = "User ID") @PathVariable Long id,
             @RequestBody UpdateUserDto dto,
             Authentication authentication) {
         // Access check: only ADMIN can update users by ID
@@ -355,31 +355,31 @@ public class UserController {
      * USER cannot delete even their own data.
      */
     @Operation(
-        summary = "Удалить пользователя",
-        description = "Удаляет пользователя из системы. Также удаляются все связанные с ним карты и переводы. Доступно только администраторам."
+        summary = "Delete user",
+        description = "Deletes user from the system. Also deletes all related cards and transfers. Available only to administrators."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Пользователь успешно удален"
+            description = "User successfully deleted"
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Доступ запрещен - требуются права администратора"
+            description = "Access denied - administrator rights required"
         ),
         @ApiResponse(
             responseCode = "404",
-            description = "Пользователь не найден"
+            description = "User not found"
         ),
         @ApiResponse(
             responseCode = "409",
-            description = "Невозможно удалить пользователя - есть связанные данные"
+            description = "Cannot delete user - related data exists"
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(
-            @Parameter(description = "ID пользователя") @PathVariable Long id,
+            @Parameter(description = "User ID") @PathVariable Long id,
             Authentication authentication) {
         log.info("Delete user request received for user ID: {} by user: {}", id,
                 authentication != null ? SecurityUtils.getEmailFromToken(authentication) : "unknown");
@@ -409,25 +409,25 @@ public class UserController {
      * Get all users (admin only)
      */
     @Operation(
-        summary = "Получить всех пользователей (для администратора)",
-        description = "Возвращает постраничный список всех пользователей системы с подробной информацией. Доступно только администраторам."
+        summary = "Get all users (for administrator)",
+        description = "Returns paginated list of all system users with detailed information. Available only to administrators."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Список пользователей получен успешно",
+            description = "User list retrieved successfully",
             content = @Content(schema = @Schema(implementation = PagedUserResponse.class))
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Доступ запрещен - требуются права администратора"
+            description = "Access denied - administrator rights required"
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/all")
     public ResponseEntity<PagedUserResponse> getAllUsersForAdmin(
-            @Parameter(description = "Номер страницы") @RequestParam(defaultValue = "0") int page,
-            @Parameter(description = "Размер страницы") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
             Authentication authentication) {
         
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);
@@ -443,23 +443,23 @@ public class UserController {
      * Search users by email (admin only)
      */
     @Operation(
-        summary = "Поиск пользователей по email",
-        description = "Выполняет поиск пользователей по шаблону email. Поддерживает частичное совпадение. Доступно только администраторам."
+        summary = "Search users by email",
+        description = "Performs user search by email pattern. Supports partial matching. Available only to administrators."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Поиск выполнен успешно"
+            description = "Search completed successfully"
         ),
         @ApiResponse(
             responseCode = "403",
-            description = "Доступ запрещен - требуются права администратора"
+            description = "Access denied - administrator rights required"
         )
     })
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin/search")
     public ResponseEntity<java.util.List<UserDto>> searchUsersByEmail(
-            @Parameter(description = "Шаблон email для поиска") @RequestParam String emailPattern,
+            @Parameter(description = "Email pattern for search") @RequestParam String emailPattern,
             Authentication authentication) {
         
         String adminEmail = SecurityUtils.getEmailFromToken(authentication);

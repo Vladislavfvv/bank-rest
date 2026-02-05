@@ -38,11 +38,11 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("API Управления Банковскими Картами")
-                        .description("REST API для управления банковскими картами, пользователями и переводами")
+                        .title("Bank Card Management API")
+                        .description("REST API for managing bank cards, users and transfers")
                         .version("1.0.0")
                         .contact(new Contact()
-                                .name("Команда Bank Cards")
+                                .name("Bank Cards Team")
                                 .email("support@bankcards.com"))
                         .license(new License()
                                 .name("MIT License")
@@ -50,10 +50,10 @@ public class OpenApiConfig {
                 .servers(List.of(
                         new Server()
                                 .url("http://localhost:" + serverPort + contextPath)
-                                .description("Локальный сервер разработки"),
+                                .description("Local development server"),
                         new Server()
                                 .url("https://api.bankcards.com" + contextPath)
-                                .description("Продакшн сервер")))
+                                .description("Production server")))
                 .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
                 .components(new io.swagger.v3.oas.models.Components()
                         .addSecuritySchemes("bearerAuth",
@@ -61,6 +61,6 @@ public class OpenApiConfig {
                                         .type(SecurityScheme.Type.HTTP)
                                         .scheme("bearer")
                                         .bearerFormat("JWT")
-                                        .description("Введите JWT токен в формате: Bearer {token}")));
+                                        .description("Enter JWT token in format: Bearer {token}")));
     }
 }

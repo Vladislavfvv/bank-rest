@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/001-create-users-table.yaml
+  - include:
+      file: db/migration/002-create-cards-table.yaml
+  - include:
+      file: db/migration/003-insert-initial-data.yaml
+  - include:
+      file: db/migration/004-create-transfers-table.yaml
+  - include:
+      file: db/migration/005-create-block-requests-table.yaml
+  - include:
+      file: db/migration/006-alter-cards-cvv-size.yaml

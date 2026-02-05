@@ -58,5 +58,5 @@ storage_v2/
 pgdata/
 postgres-data/
 data/
-db/
+#db/ changed to add migrations
 **/.env

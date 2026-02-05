@@ -1,0 +1,268 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-insert-initial-data
+      author: vlad
+      comment: "Inserting initial data for testing"
+      context: "!prod"  # Do not run in production
+      changes:
+        # Create admin
+        - insert:
+            tableName: users
+            schemaName: public
+            columns:
+              - column:
+                  name: first_name
+                  value: "Admin"
+              - column:
+                  name: last_name
+                  value: "Admin"
+              - column:
+                  name: birth_date
+                  value: "1990-01-01"
+              - column:
+                  name: email
+                  value: "admin@mail.ru"
+              - column:
+                  name: phone_number
+                  value: "+1234567890"
+              - column:
+                  name: password
+                  value: "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi."  # password: password
+              - column:
+                  name: role
+                  value: "ROLE_ADMIN"
+              - column:
+                  name: is_active
+                  value: "true"
+        
+        # Create first user
+        - insert:
+            tableName: users
+            schemaName: public
+            columns:
+              - column:
+                  name: first_name
+                  value: "Ivan"
+              - column:
+                  name: last_name
+                  value: "Ivanov"
+              - column:
+                  name: birth_date
+                  value: "1985-05-05"
+              - column:
+                  name: email
+                  value: "ivan@gmail.com"
+              - column:
+                  name: phone_number
+                  value: "+1987654321"
+              - column:
+                  name: password
+                  value: "$2a$10$7IwNUN.iJsKctSoKers7Puy91iQnib9P8z6FVsxZ6PIT82oWh.txO"  # password: Ivan1234
+              - column:
+                  name: role
+                  value: "ROLE_USER"
+              - column:
+                  name: is_active
+                  value: "true"
+        
+        # Create card for Ivan Ivanov
+        - insert:
+            tableName: cards
+            schemaName: public
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: "(SELECT id FROM users WHERE email = 'ivan@gmail.com')"
+              - column:
+                  name: number
+                  value: "encrypted_4111111111111111"  # Encrypted test card number
+              - column:
+                  name: holder
+                  value: "IVAN IVANOV"
+              - column:
+                  name: expiration_date
+                  value: "2027-12-31"
+              - column:
+                  name: cvv
+                  value: "123"
+              - column:
+                  name: balance
+                  value: "1000.00"
+              - column:
+                  name: status
+                  value: "ACTIVE"
+        
+        # Create second card for Ivan Ivanov
+        - insert:
+            tableName: cards
+            schemaName: public
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: "(SELECT id FROM users WHERE email = 'ivan@gmail.com')"
+              - column:
+                  name: number
+                  value: "encrypted_5555555555554444"
+              - column:
+                  name: holder
+                  value: "IVAN IVANOV"
+              - column:
+                  name: expiration_date
+                  value: "2026-06-01"
+              - column:
+                  name: cvv
+                  value: "456"  #  In reality it should be encrypted
+              - column:
+                  name: balance
+                  value: "2500.55"
+              - column:
+                  name: status
+                  value: "ACTIVE"
+
+        # Create third card for для Ivan Ivanov
+        - insert:
+            tableName: cards
+            schemaName: public
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: "(SELECT id FROM users WHERE email = 'ivan@gmail.com')"
+              - column:
+                  name: number
+                  value: "encrypted_4222222233335555"
+              - column:
+                  name: holder
+                  value: "IVAN IVANOV"
+              - column:
+                  name: expiration_date
+                  value: "2025-12-31"
+              - column:
+                  name: cvv
+                  value: "123"
+              - column:
+                  name: balance
+                  value: "5.00"
+              - column:
+                  name: status
+                  value: "EXPIRED"
+
+        # Card for Ivan Ivanov
+        - insert:
+            tableName: cards
+            schemaName: public
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: "(SELECT id FROM users WHERE email = 'ivan@gmail.com')"
+              - column:
+                  name: number
+                  value: "encrypted_5555444433332222"
+              - column:
+                  name: holder
+                  value: "IVAN IVANOV"
+              - column:
+                  name: expiration_date
+                  value: "2025-12-31"
+              - column:
+                  name: cvv
+                  value: "123"
+              - column:
+                  name: balance
+                  value: "10000000.00"
+              - column:
+                  name: status
+                  value: "BLOCKED"
+
+        # Create user #2
+        - insert:
+            tableName: users
+            schemaName: public
+            columns:
+              - column:
+                  name: first_name
+                  value: "Petr"
+              - column:
+                  name: last_name
+                  value: "Petrov"
+              - column:
+                  name: birth_date
+                  value: "1955-01-01"
+              - column:
+                  name: email
+                  value: "petr@mail.ru"
+              - column:
+                  name: phone_number
+                  value: "+9999999999"
+              - column:
+                  name: password
+                  value: "$2a$10$oLg7Rzll5AbKH8Pdm9sFweAP.64i6oDJO8qeT1T9lDvRwOPXZmuDe"  # password: Petr1234
+              - column:
+                  name: role
+                  value: "ROLE_USER"
+              - column:
+                  name: is_active
+                  value: "true"
+
+        # Card for Petr Petrov
+        - insert:
+            tableName: cards
+            schemaName: public
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: "(SELECT id FROM users WHERE email = 'petr@mail.ru')"
+              - column:
+                  name: number
+                  value: "encrypted_4444444455556666"
+              - column:
+                  name: holder
+                  value: "PETR PETROV"
+              - column:
+                  name: expiration_date
+                  value: "2026-12-31"
+              - column:
+                  name: cvv
+                  value: "123"
+              - column:
+                  name: balance
+                  value: "1500.00"
+              - column:
+                  name: status
+                  value: "ACTIVE"
+
+        # Second card for для Petr Petrov
+        - insert:
+            tableName: cards
+            schemaName: public
+            columns:
+              - column:
+                  name: user_id
+                  valueComputed: "(SELECT id FROM users WHERE email = 'petr@mail.ru')"
+              - column:
+                  name: number
+                  value: "encrypted_7777777777774444"
+              - column:
+                  name: holder
+                  value: "PETR PETROV"
+              - column:
+                  name: expiration_date
+                  value: "2030-01-01"
+              - column:
+                  name: cvv
+                  value: "456"
+              - column:
+                  name: balance
+                  value: "100500.00"
+              - column:
+                  name: status
+                  value: "ACTIVE"
+
+      rollback:
+        - delete:
+            tableName: cards
+            schemaName: public
+            where: "user_id IN (SELECT id FROM users WHERE email IN ('admin@mail.ru', 'ivan@gmail.com', 'petr@mail.ru'))"
+        - delete:
+            tableName: users
+            schemaName: public
+            where: "email IN ('admin@mail.ru', 'ivan@gmail.com', 'petr@mail.ru')"

@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Authentication", description = "Аутентификация и управление токенами")
+@Tag(name = "Authentication", description = "Authentication and token management")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
@@ -43,22 +43,22 @@ public class AuthenticationController {
      * @return TokenResponse with access and refresh tokens
      */
     @Operation(
-        summary = "Вход в систему",
-        description = "Аутентификация пользователя по email и паролю. Возвращает JWT токены для доступа к API."
+        summary = "User login",
+        description = "User authentication by email and password. Returns JWT tokens for API access."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Успешная аутентификация",
+            description = "Successful authentication",
             content = @Content(schema = @Schema(implementation = TokenResponse.class))
         ),
         @ApiResponse(
             responseCode = "401",
-            description = "Неверные учетные данные"
+            description = "Invalid credentials"
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Некорректные данные запроса"
+            description = "Invalid request data"
         )
     })
     @PostMapping("/login")
@@ -76,22 +76,22 @@ public class AuthenticationController {
      * @return TokenResponse with access and refresh tokens
      */
     @Operation(
-        summary = "Регистрация нового пользователя",
-        description = "Создание нового пользователя в системе. Возвращает JWT токены для немедленного доступа к API."
+        summary = "Register new user",
+        description = "Create new user in the system. Returns JWT tokens for immediate API access."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "201",
-            description = "Пользователь успешно зарегистрирован",
+            description = "User successfully registered",
             content = @Content(schema = @Schema(implementation = TokenResponse.class))
         ),
         @ApiResponse(
             responseCode = "409",
-            description = "Пользователь с таким email уже существует"
+            description = "User with this email already exists"
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Некорректные данные запроса"
+            description = "Invalid request data"
         )
     })
     @PostMapping("/register")
@@ -110,22 +110,22 @@ public class AuthenticationController {
      * @return TokenResponse with new access and refresh tokens
      */
     @Operation(
-        summary = "Обновление токена доступа",
-        description = "Получение нового access токена с помощью refresh токена. Возвращает новую пару токенов."
+        summary = "Refresh access token",
+        description = "Get new access token using refresh token. Returns new pair of tokens."
     )
     @ApiResponses(value = {
         @ApiResponse(
             responseCode = "200",
-            description = "Токен успешно обновлен",
+            description = "Token successfully refreshed",
             content = @Content(schema = @Schema(implementation = TokenResponse.class))
         ),
         @ApiResponse(
             responseCode = "401",
-            description = "Недействительный refresh токен"
+            description = "Invalid refresh token"
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "Некорректные данные запроса"
+            description = "Invalid request data"
         )
     })
     @PostMapping("/refresh")
